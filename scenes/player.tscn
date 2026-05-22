@@ -1,0 +1,44 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1"]
+
+[sub_resource type="CapsuleShape2D" id="1"]
+radius = 8.0
+height = 20.0
+
+[sub_resource type="CircleShape2D" id="2"]
+radius = 40.0
+
+[sub_resource type="SceneReplicationConfig" id="3"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/sync = 1
+properties/1/path = NodePath(".:modulate")
+properties/1/spawn = false
+properties/1/sync = 2
+properties/2/path = NodePath(".:hp")
+properties/2/spawn = true
+properties/2/sync = 2
+properties/3/path = NodePath(".:is_ghost")
+properties/3/spawn = false
+properties/3/sync = 2
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 5
+script = ExtResource("1")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1")
+
+[node name="ReviveArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="ReviveShape" type="CollisionShape2D" parent="ReviveArea"]
+shape = SubResource("2")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("3")

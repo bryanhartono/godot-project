@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[node name="UpgradeCard" type="PanelContainer"]
+custom_minimum_size = Vector2(120.0, 160.0)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="CardIcon" type="TextureRect" parent="VBox"]
+custom_minimum_size = Vector2(64.0, 64.0)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CardName" type="Label" parent="VBox"]
+text = "Card Name"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="CardDesc" type="Label" parent="VBox"]
+text = "Description"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="SelectButton" type="Button" parent="VBox"]
+text = "Choose"
