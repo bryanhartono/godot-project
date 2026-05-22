@@ -1,5 +1,7 @@
 extends Area2D
 
+signal picked_up()
+
 enum Rarity { COMMON, UNCOMMON, RARE, EPIC }
 
 const RARITY_WEIGHTS: Array = [60, 25, 12, 3]
@@ -41,4 +43,5 @@ func _on_body_entered(body: Node2D) -> void:
 	_picked_up = true
 	body.heal(HP_AMOUNTS[rarity])
 	MetaManager.add_coins(COIN_AMOUNTS[rarity])
+	picked_up.emit()
 	queue_free()

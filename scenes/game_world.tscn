@@ -11,6 +11,23 @@ zoom = Vector2(2.0, 2.0)
 
 [node name="HUD" parent="." instance=ExtResource("2")]
 
-
-
 [node name="Entities" type="Node2D" parent="."]
+
+[node name="CardDraftLayer" type="CanvasLayer" parent="."]
+layer = 10
+visible = false
+
+[node name="Background" type="ColorRect" parent="CardDraftLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.7)
+
+[node name="Center" type="CenterContainer" parent="CardDraftLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="CardRow" type="HBoxContainer" parent="CardDraftLayer/Center"]
+layout_mode = 2
+theme_override_constants/separation = 16

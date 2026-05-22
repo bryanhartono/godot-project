@@ -2,12 +2,10 @@ extends CharacterBody2D
 
 const BASE_HP = 100
 const BASE_FIRE_RATE = 0.5
-const SPEED = 120.0
 
 @export var player_id: int = 1
 @export var character_index: int = 0  # 0=Blue 1=Red 2=Green 3=Grey
 
-# Per-character passives: fire_rate_mult, aoe_mult, heal_on_kill, hp_bonus
 const PASSIVES = [
 	{"fire_rate_mult": 0.7, "aoe_mult": 1.0, "heal_on_kill": 0,  "hp_bonus": 0},
 	{"fire_rate_mult": 1.0, "aoe_mult": 1.5, "heal_on_kill": 0,  "hp_bonus": 0},
@@ -15,23 +13,26 @@ const PASSIVES = [
 	{"fire_rate_mult": 1.0, "aoe_mult": 1.0, "heal_on_kill": 0,  "hp_bonus": 50},
 ]
 
-var max_hp: int = BASE_HP
-var hp: int = BASE_HP
-var fire_rate: float = BASE_FIRE_RATE
-var aoe_mult: float = 1.0
-var heal_on_kill: int = 0
-var owned_upgrade_tags: Array = []
-
-var _fire_timer: float = 0.0
-var _is_dead: bool = false
-var _is_ghost: bool = false
-
 const CHARACTER_FRAMES: Array = [
 	preload("res://resources/player_blue_frames.tres"),
 	preload("res://resources/player_red_frames.tres"),
 	preload("res://resources/player_green_frames.tres"),
 	preload("res://resources/player_grey_frames.tres"),
 ]
+
+var max_hp: int = BASE_HP
+var hp: int = BASE_HP
+var fire_rate: float = BASE_FIRE_RATE
+var speed: float = 120.0
+var damage_mult: float = 1.0
+var aoe_mult: float = 1.0
+var heal_on_kill: int = 0
+var owned_upgrade_tags: Array = []
+
+var _fire_timer: float = 0.0
+var _chain_counter: int = 0
+var _is_dead: bool = false
+var _is_ghost: bool = false
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var collision: CollisionShape2D = $CollisionShape2D
@@ -61,7 +62,7 @@ func _handle_movement() -> void:
 	if Input.is_action_pressed("move_left"):  dir.x -= 1.0
 	if Input.is_action_pressed("move_down"):  dir.y += 1.0
 	if Input.is_action_pressed("move_up"):    dir.y -= 1.0
-	velocity = dir.normalized() * SPEED
+	velocity = dir.normalized() * speed
 	move_and_slide()
 	if dir != Vector2.ZERO:
 		sprite.play("run")
@@ -90,11 +91,48 @@ func _find_nearest_enemy() -> Node2D:
 
 @rpc("call_local")
 func _shoot_at(target_pos: Vector2) -> void:
-	var proj = preload("res://scenes/projectile.tscn").instantiate()
-	proj.global_position = global_position
-	proj.direction = (target_pos - global_position).normalized()
-	proj.owner_id = player_id
-	get_tree().root.add_child(proj)
+	var base_dir := (target_pos - global_position).normalized()
+	var dirs := [base_dir]
+	if has_meta("scatter"):
+		dirs = [
+			base_dir.rotated(deg_to_rad(-20.0)),
+			base_dir,
+			base_dir.rotated(deg_to_rad(20.0)),
+		]
+
+	_chain_counter += 1
+	var do_chain := has_meta("chain") and (_chain_counter % 5 == 0)
+
+	for dir in dirs:
+		var proj = preload("res://scenes/projectile.tscn").instantiate()
+		proj.global_position = global_position
+		proj.direction = dir
+		proj.damage = int(20.0 * damage_mult)
+		proj.owner_id = player_id
+		if has_meta("vampiric"):
+			proj.vampiric = true
+		if has_meta("phantom"):
+			proj.pierce_remaining = 1
+		get_tree().root.add_child(proj)
+
+	if do_chain:
+		_fire_chain_shot()
+
+func _fire_chain_shot() -> void:
+	var nearest: Node2D = null
+	var nearest_dist := INF
+	for e in get_tree().get_nodes_in_group("enemies"):
+		var d := global_position.distance_to(e.global_position)
+		if d < nearest_dist:
+			nearest_dist = d
+			nearest = e
+	if nearest:
+		var proj = preload("res://scenes/projectile.tscn").instantiate()
+		proj.global_position = global_position
+		proj.direction = (nearest.global_position - global_position).normalized()
+		proj.damage = int(10.0 * damage_mult)
+		proj.owner_id = player_id
+		get_tree().root.add_child(proj)
 
 func take_damage(amount: int) -> void:
 	if _is_dead or _is_ghost:

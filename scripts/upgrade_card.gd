@@ -5,7 +5,7 @@ const ALL_CARDS: Array = [
 	{"id": "scatter_shot",    "name": "Scatter Shot",    "desc": "Fires 3 projectiles in a spread cone",    "cursed": false, "tags": ["multi", "spread"]},
 	{"id": "ricochet",        "name": "Ricochet",        "desc": "Bullets bounce off walls once",           "cursed": false, "tags": ["utility"]},
 	{"id": "chain_lightning", "name": "Chain Lightning", "desc": "Every 5th shot chains to a nearby enemy", "cursed": false, "tags": ["chain", "multi"]},
-	{"id": "overdrive",       "name": "Overdrive",       "desc": "+100% fire rate for 5s after room clear", "cursed": false, "tags": ["fire_rate", "burst"]},
+	{"id": "overdrive",       "name": "Overdrive",       "desc": "+100% fire rate after room clear",        "cursed": false, "tags": ["fire_rate", "burst"]},
 	{"id": "vampiric_round",  "name": "Vampiric Round",  "desc": "10% of damage dealt restores HP",         "cursed": false, "tags": ["sustain"]},
 	{"id": "phantom_ammo",    "name": "Phantom Ammo",    "desc": "Projectiles pass through one enemy",      "cursed": false, "tags": ["pierce", "utility"]},
 	{"id": "glass_cannon",    "name": "Glass Cannon",    "desc": "+80% damage, -30% max HP",                "cursed": true,  "tags": ["damage"]},
@@ -42,14 +42,21 @@ static func apply_card(card_id: String, player: Node) -> void:
 	match card_id:
 		"scatter_shot":
 			player.set_meta("scatter", true)
+		"ricochet":
+			pass  # Phase 3: requires wall physics layer
+		"chain_lightning":
+			player.set_meta("chain", true)
 		"overdrive":
-			player.fire_rate *= 0.5
+			player.fire_rate = maxf(player.fire_rate * 0.5, 0.1)
 		"vampiric_round":
 			player.set_meta("vampiric", true)
+		"phantom_ammo":
+			player.set_meta("phantom", true)
 		"glass_cannon":
+			player.damage_mult *= 1.8
 			player.max_hp = int(player.max_hp * 0.7)
 			player.hp = min(player.hp, player.max_hp)
 		"berserker":
-			player.fire_rate *= 0.5
+			player.fire_rate = maxf(player.fire_rate * 0.5, 0.1)
 			player.max_hp = int(player.max_hp * 0.8)
 			player.hp = min(player.hp, player.max_hp)
