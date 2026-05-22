@@ -1,9 +1,9 @@
 extends Node2D
 
-const ROOM_SPAWN_POS := Vector2(320.0, 240.0)
-const PLAYER_START := Vector2(240.0, 240.0)
+const ROOM_SPAWN_POS: Vector2 = Vector2(320.0, 240.0)
+const PLAYER_START: Vector2 = Vector2(240.0, 240.0)
 
-var _tagged_rooms: Array = []
+var _tagged_rooms: Array[Dictionary] = []
 var _room_index: int = 0
 var _active_room: Node2D = null
 var _players: Array = []
@@ -173,12 +173,14 @@ func _on_boss_died() -> void:
 # ---- Card draft (server draws pool, broadcasts to all peers) ----
 
 func _show_card_draft() -> void:
-	var owned_tags: Array = []
-	for p in _players:
+	var owned_tags: Array[String] = []
+	for p: Node in _players:
 		if is_instance_valid(p):
 			owned_tags.append_array(p.owned_upgrade_tags)
 	var drawn := UpgradeCard.draw_cards(owned_tags, RunManager.current_floor, RunManager.rng)
-	var card_ids: Array = drawn.map(func(c: Dictionary) -> String: return c["id"])
+	var card_ids: Array[String] = []
+	for c: Dictionary in drawn:
+		card_ids.append(c["id"])
 	_present_card_draft.rpc(card_ids)
 
 @rpc("authority", "call_local", "reliable")

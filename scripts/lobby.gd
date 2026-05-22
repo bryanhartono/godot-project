@@ -1,7 +1,12 @@
 extends Control
 
-const PLAYER_COLORS := ["Blue", "Red", "Green", "Grey"]
-const CHARACTER_TINTS := [Color(0.4, 0.6, 1.0), Color(1.0, 0.4, 0.4), Color(0.4, 1.0, 0.5), Color(0.7, 0.7, 0.7)]
+const PLAYER_COLORS: Array[String] = ["Blue", "Red", "Green", "Grey"]
+const CHARACTER_TINTS: Array[Color] = [
+	Color(0.4, 0.6, 1.0),
+	Color(1.0, 0.4, 0.4),
+	Color(0.4, 1.0, 0.5),
+	Color(0.7, 0.7, 0.7),
+]
 
 var _selected_character: int = 0
 
@@ -24,9 +29,9 @@ func _ready() -> void:
 	_build_character_row()
 
 func _build_character_row() -> void:
-	for c in char_row.get_children():
+	for c: Node in char_row.get_children():
 		c.queue_free()
-	for i in PLAYER_COLORS.size():
+	for i: int in PLAYER_COLORS.size():
 		var btn := Button.new()
 		btn.text = PLAYER_COLORS[i]
 		btn.modulate = CHARACTER_TINTS[i]
@@ -35,16 +40,16 @@ func _build_character_row() -> void:
 	_highlight_character(_selected_character)
 
 func _highlight_character(index: int) -> void:
-	var btns := char_row.get_children()
-	for i in btns.size():
-		btns[i].flat = (i != index)
+	var btns: Array[Node] = char_row.get_children()
+	for i: int in btns.size():
+		(btns[i] as Button).flat = (i != index)
 
 func _on_character_selected(index: int) -> void:
 	_selected_character = index
 	_highlight_character(index)
 
 func _on_host_pressed() -> void:
-	var code := NetworkManager.host_game(_selected_character)
+	var code: String = NetworkManager.host_game(_selected_character)
 	room_code_label.text = "Room Code: %s" % code
 	status_label.text = "Waiting for players…"
 	start_button.visible = true
@@ -54,7 +59,7 @@ func _on_host_pressed() -> void:
 	_refresh_list()
 
 func _on_join_pressed() -> void:
-	var addr := code_input.text.strip_edges()
+	var addr: String = code_input.text.strip_edges()
 	if addr.is_empty():
 		return
 	status_label.text = "Connecting…"
@@ -71,11 +76,9 @@ func _on_start_pressed() -> void:
 		return
 	_start_game.rpc()
 
-func _on_player_connected(id: int) -> void:
+func _on_player_connected(_id: int) -> void:
 	_refresh_list()
 	status_label.text = "%d player(s) in room" % NetworkManager.get_player_count()
-	# Notify new peer of our character selection
-	NetworkManager._submit_character_selection.rpc_id(1, _selected_character)
 
 func _on_player_disconnected(_id: int) -> void:
 	_refresh_list()
@@ -96,11 +99,11 @@ func _reset_buttons() -> void:
 	start_button.visible = false
 
 func _refresh_list() -> void:
-	for child in player_list.get_children():
+	for child: Node in player_list.get_children():
 		child.queue_free()
-	var i := 0
-	for peer_id in NetworkManager.players:
-		var char_idx := NetworkManager.get_character_selection(peer_id)
+	var i: int = 0
+	for peer_id: int in NetworkManager.players:
+		var char_idx: int = NetworkManager.get_character_selection(peer_id)
 		var lbl := Label.new()
 		lbl.text = "Player %d — %s" % [i + 1, PLAYER_COLORS[char_idx]]
 		lbl.modulate = CHARACTER_TINTS[char_idx]

@@ -27,7 +27,7 @@ var speed: float = 120.0
 var damage_mult: float = 1.0
 var aoe_mult: float = 1.0
 var heal_on_kill: int = 0
-var owned_upgrade_tags: Array = []
+var owned_upgrade_tags: Array[String] = []
 var is_ghost: bool = false
 
 var _fire_timer: float = 0.0
@@ -100,7 +100,7 @@ func _find_nearest_enemy() -> Node2D:
 @rpc("call_local")
 func _shoot_at(target_pos: Vector2) -> void:
 	var base_dir := (target_pos - global_position).normalized()
-	var dirs := [base_dir]
+	var dirs: Array[Vector2] = [base_dir]
 	if has_meta("scatter"):
 		dirs = [
 			base_dir.rotated(deg_to_rad(-20.0)),

@@ -1,7 +1,7 @@
 class_name UpgradeCard
 extends Resource
 
-const ALL_CARDS: Array = [
+const ALL_CARDS: Array[Dictionary] = [
 	{"id": "scatter_shot",    "name": "Scatter Shot",    "desc": "Fires 3 projectiles in a spread cone",    "cursed": false, "tags": ["multi", "spread"]},
 	{"id": "ricochet",        "name": "Ricochet",        "desc": "Bullets bounce off walls once",           "cursed": false, "tags": ["utility"]},
 	{"id": "chain_lightning", "name": "Chain Lightning", "desc": "Every 5th shot chains to a nearby enemy", "cursed": false, "tags": ["chain", "multi"]},
@@ -12,24 +12,24 @@ const ALL_CARDS: Array = [
 	{"id": "berserker",       "name": "Berserker",       "desc": "+100% fire rate, -20% max HP",            "cursed": true,  "tags": ["fire_rate"]},
 ]
 
-static func draw_cards(owned_tags: Array, floor_number: int, rng: RandomNumberGenerator, count: int = 3) -> Array:
-	var pool: Array = ALL_CARDS.duplicate()
+static func draw_cards(owned_tags: Array[String], floor_number: int, rng: RandomNumberGenerator, count: int = 3) -> Array[Dictionary]:
+	var pool: Array[Dictionary] = ALL_CARDS.duplicate()
 	if floor_number < 3:
 		pool = pool.filter(func(c: Dictionary) -> bool: return not c["cursed"])
 
-	var weighted: Array = []
+	var weighted: Array[Dictionary] = []
 	for card: Dictionary in pool:
-		var weight := 10
+		var weight: int = 10
 		for tag: String in card["tags"]:
 			if tag in owned_tags:
 				weight += 5
-		for _i in weight:
+		for _i: int in weight:
 			weighted.append(card)
 
 	weighted.shuffle()
 
-	var drawn: Array = []
-	var seen: Array = []
+	var drawn: Array[Dictionary] = []
+	var seen: Array[String] = []
 	for card: Dictionary in weighted:
 		if card["id"] not in seen:
 			drawn.append(card)
@@ -43,7 +43,7 @@ static func apply_card(card_id: String, player: Node) -> void:
 		"scatter_shot":
 			player.set_meta("scatter", true)
 		"ricochet":
-			pass  # Phase 3: requires wall physics layer
+			pass  # Phase 4: requires wall physics layer
 		"chain_lightning":
 			player.set_meta("chain", true)
 		"overdrive":

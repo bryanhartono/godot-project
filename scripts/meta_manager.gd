@@ -1,9 +1,9 @@
 extends Node
 
-const SAVE_PATH = "user://save.cfg"
+const SAVE_PATH: String = "user://save.cfg"
 
 var coins: int = 0
-var unlocked_characters: Array = [0, 1, 2]
+var unlocked_characters: Array[int] = [0, 1, 2]
 var permanent_upgrades: Dictionary = {}
 
 func _ready() -> void:
@@ -21,7 +21,8 @@ func load_data() -> void:
 	if config.load(SAVE_PATH) != OK:
 		return
 	coins = config.get_value("progress", "coins", 0)
-	unlocked_characters = config.get_value("progress", "unlocked_characters", [0, 1, 2])
+	var loaded_chars: Array = config.get_value("progress", "unlocked_characters", [0, 1, 2])
+	unlocked_characters.assign(loaded_chars)
 	permanent_upgrades = config.get_value("progress", "permanent_upgrades", {})
 
 func add_coins(amount: int) -> void:

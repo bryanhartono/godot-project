@@ -8,7 +8,7 @@ signal phase_changed(phase: int)
 
 var max_hp: int
 var hp: int
-var _pattern_deck: Array = []
+var _pattern_deck: Array[int] = []
 var _deck_index: int = 0
 var _current_phase: int = 0
 var _rage_mode: bool = false

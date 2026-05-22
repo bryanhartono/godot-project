@@ -1,39 +1,41 @@
 extends Node2D
 
-const FILL_CHANCE := 0.35
-const AUTOMATA_PASSES := 3
-const TILE_SIZE := 32
+const FILL_CHANCE: float = 0.35
+const AUTOMATA_PASSES: int = 3
+const TILE_SIZE: int = 32
 
-var _grid: Array = []
+var _grid: Array[Array] = []
 var _room_size: Vector2i
 
 func generate_traps(room_rect: Rect2i, rng: RandomNumberGenerator) -> void:
 	_room_size = room_rect.size
 	_grid = []
-	for y in _room_size.y:
-		_grid.append([])
-		for x in _room_size.x:
-			_grid[y].append(1 if rng.randf() < FILL_CHANCE else 0)
-	for _i in AUTOMATA_PASSES:
+	for y: int in _room_size.y:
+		var row: Array[int] = []
+		for x: int in _room_size.x:
+			row.append(1 if rng.randf() < FILL_CHANCE else 0)
+		_grid.append(row)
+	for _i: int in AUTOMATA_PASSES:
 		_smooth()
 	_spawn_hazards(room_rect.position)
 
 func _smooth() -> void:
-	var next: Array = []
-	for y in _room_size.y:
-		next.append([])
-		for x in _room_size.x:
-			next[y].append(1 if _neighbor_count(x, y) >= 5 else 0)
+	var next: Array[Array] = []
+	for y: int in _room_size.y:
+		var row: Array[int] = []
+		for x: int in _room_size.x:
+			row.append(1 if _neighbor_count(x, y) >= 5 else 0)
+		next.append(row)
 	_grid = next
 
 func _neighbor_count(cx: int, cy: int) -> int:
-	var count := 0
-	for dy in range(-1, 2):
-		for dx in range(-1, 2):
+	var count: int = 0
+	for dy: int in range(-1, 2):
+		for dx: int in range(-1, 2):
 			if dx == 0 and dy == 0:
 				continue
-			var nx := cx + dx
-			var ny := cy + dy
+			var nx: int = cx + dx
+			var ny: int = cy + dy
 			if nx < 0 or ny < 0 or nx >= _room_size.x or ny >= _room_size.y:
 				count += 1
 			else:
@@ -41,8 +43,8 @@ func _neighbor_count(cx: int, cy: int) -> int:
 	return count
 
 func _spawn_hazards(origin: Vector2i) -> void:
-	for y in _room_size.y:
-		for x in _room_size.x:
+	for y: int in _room_size.y:
+		for x: int in _room_size.x:
 			if _grid[y][x] == 1:
 				var hazard := ColorRect.new()
 				hazard.size = Vector2(TILE_SIZE, TILE_SIZE)

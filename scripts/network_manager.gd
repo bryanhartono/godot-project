@@ -5,14 +5,15 @@ signal player_disconnected(peer_id: int)
 signal connection_failed()
 signal server_disconnected()
 
-const MAX_PLAYERS = 4
-const DEFAULT_PORT = 7777
+const MAX_PLAYERS: int = 4
+const DEFAULT_PORT: int = 7777
 # Set to a deployed relay URL to enable cross-NAT online play.
-# Format expected by relay: wss://host/?code=XXXXXX&role=host|client
-const RELAY_URL := ""
+# Format: wss://host/?code=XXXXXX&role=host|client
+const RELAY_URL: String = ""
 
 var players: Dictionary = {}
-var _character_selections: Dictionary = {}  # peer_id -> character_index
+var _character_selections: Dictionary = {}
+var _pending_char_selection: int = 0
 
 func _ready() -> void:
 	multiplayer.peer_connected.connect(_on_peer_connected)
@@ -24,7 +25,7 @@ func _ready() -> void:
 # ---- Connection ----
 
 func host_game(character_index: int = 0) -> String:
-	var code := _generate_room_code()
+	var code: String = _generate_room_code()
 	_character_selections[1] = character_index
 	if not RELAY_URL.is_empty():
 		var peer := WebSocketMultiplayerPeer.new()
@@ -38,8 +39,7 @@ func host_game(character_index: int = 0) -> String:
 	return code
 
 func join_game(address: String, character_index: int = 0) -> void:
-	var my_id := multiplayer.get_unique_id() if multiplayer.has_multiplayer_peer() else 0
-	_character_selections[my_id] = character_index
+	_pending_char_selection = character_index
 	if not RELAY_URL.is_empty():
 		var peer := WebSocketMultiplayerPeer.new()
 		peer.create_client("%s?code=%s&role=client" % [RELAY_URL, address])
@@ -63,15 +63,13 @@ func is_solo() -> bool:
 func get_character_selection(peer_id: int) -> int:
 	return _character_selections.get(peer_id, 0)
 
-func set_character_selection(peer_id: int, index: int) -> void:
-	_character_selections[peer_id] = index
-
 # ---- Peer events ----
 
 func _on_peer_connected(id: int) -> void:
 	players[id] = {"id": id, "ready": false}
 	player_connected.emit(id)
 	if multiplayer.is_server():
+		# Send existing selections to the newly joined peer
 		_broadcast_character_selections.rpc_id(id, _character_selections)
 
 func _on_peer_disconnected(id: int) -> void:
@@ -80,8 +78,11 @@ func _on_peer_disconnected(id: int) -> void:
 	player_disconnected.emit(id)
 
 func _on_connected_to_server() -> void:
-	var my_id := multiplayer.get_unique_id()
+	var my_id: int = multiplayer.get_unique_id()
 	players[my_id] = {"id": my_id, "ready": false}
+	_character_selections[my_id] = _pending_char_selection
+	# Announce our character selection to the server
+	_submit_character_selection.rpc_id(1, _pending_char_selection)
 
 func _on_connection_failed() -> void:
 	connection_failed.emit()
@@ -99,14 +100,14 @@ func _broadcast_character_selections(selections: Dictionary) -> void:
 
 @rpc("any_peer", "reliable")
 func _submit_character_selection(index: int) -> void:
-	var sender := multiplayer.get_remote_sender_id()
+	var sender: int = multiplayer.get_remote_sender_id()
 	_character_selections[sender] = index
 
 # ---- Helpers ----
 
 func _generate_room_code() -> String:
-	const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-	var code := ""
-	for i in 6:
+	const CHARS: String = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+	var code: String = ""
+	for i: int in 6:
 		code += CHARS[randi() % CHARS.length()]
 	return code

@@ -1,9 +1,9 @@
 class_name DungeonGenerator
 extends RefCounted
 
-const MIN_ROOM = Vector2i(6, 5)
-const MAX_ROOM = Vector2i(14, 10)
-const MAP_SIZE = Vector2i(60, 40)
+const MIN_ROOM: Vector2i = Vector2i(6, 5)
+const MAX_ROOM: Vector2i = Vector2i(14, 10)
+const MAP_SIZE: Vector2i = Vector2i(60, 40)
 
 class BSPNode:
 	var rect: Rect2i
@@ -14,8 +14,8 @@ class BSPNode:
 	func _init(r: Rect2i) -> void:
 		rect = r
 
-var rooms: Array = []
-var corridors: Array = []
+var rooms: Array[Rect2i] = []
+var corridors: Array[Rect2i] = []
 var rng: RandomNumberGenerator
 
 func generate(seed_value: int) -> Dictionary:
@@ -29,11 +29,11 @@ func generate(seed_value: int) -> Dictionary:
 	_connect_rooms(root)
 	return {"rooms": rooms, "corridors": corridors}
 
-func tag_rooms(floor_number: int) -> Array:
-	var tags := ["combat", "combat", "combat", "treasure", "shop", "trap"]
-	var result: Array = []
-	for i in rooms.size():
-		var tag := "combat"
+func tag_rooms(floor_number: int) -> Array[Dictionary]:
+	var tags: Array[String] = ["combat", "combat", "combat", "treasure", "shop", "trap"]
+	var result: Array[Dictionary] = []
+	for i: int in rooms.size():
+		var tag: String = "combat"
 		if i == rooms.size() - 1 and floor_number % 5 == 0:
 			tag = "boss_entry"
 		elif i < tags.size():
@@ -46,26 +46,26 @@ func _split(node: BSPNode, depth: int) -> void:
 		return
 	if node.rect.size.x < MIN_ROOM.x * 2 and node.rect.size.y < MIN_ROOM.y * 2:
 		return
-	var horiz := rng.randf() > 0.5
+	var horiz: bool = rng.randf() > 0.5
 	if node.rect.size.x > node.rect.size.y * 1.25:
 		horiz = false
 	elif node.rect.size.y > node.rect.size.x * 1.25:
 		horiz = true
 
 	if horiz:
-		var min_split := MIN_ROOM.y
-		var max_split := node.rect.size.y - MIN_ROOM.y
+		var min_split: int = MIN_ROOM.y
+		var max_split: int = node.rect.size.y - MIN_ROOM.y
 		if min_split >= max_split:
 			return
-		var split := rng.randi_range(min_split, max_split)
+		var split: int = rng.randi_range(min_split, max_split)
 		node.left = BSPNode.new(Rect2i(node.rect.position, Vector2i(node.rect.size.x, split)))
 		node.right = BSPNode.new(Rect2i(node.rect.position + Vector2i(0, split), Vector2i(node.rect.size.x, node.rect.size.y - split)))
 	else:
-		var min_split := MIN_ROOM.x
-		var max_split := node.rect.size.x - MIN_ROOM.x
+		var min_split: int = MIN_ROOM.x
+		var max_split: int = node.rect.size.x - MIN_ROOM.x
 		if min_split >= max_split:
 			return
-		var split := rng.randi_range(min_split, max_split)
+		var split: int = rng.randi_range(min_split, max_split)
 		node.left = BSPNode.new(Rect2i(node.rect.position, Vector2i(split, node.rect.size.y)))
 		node.right = BSPNode.new(Rect2i(node.rect.position + Vector2i(split, 0), Vector2i(node.rect.size.x - split, node.rect.size.y)))
 
@@ -74,10 +74,10 @@ func _split(node: BSPNode, depth: int) -> void:
 
 func _place_rooms(node: BSPNode) -> void:
 	if node.left == null and node.right == null:
-		var w := rng.randi_range(MIN_ROOM.x, min(MAX_ROOM.x, node.rect.size.x - 2))
-		var h := rng.randi_range(MIN_ROOM.y, min(MAX_ROOM.y, node.rect.size.y - 2))
-		var x := node.rect.position.x + rng.randi_range(1, max(1, node.rect.size.x - w - 1))
-		var y := node.rect.position.y + rng.randi_range(1, max(1, node.rect.size.y - h - 1))
+		var w: int = rng.randi_range(MIN_ROOM.x, min(MAX_ROOM.x, node.rect.size.x - 2))
+		var h: int = rng.randi_range(MIN_ROOM.y, min(MAX_ROOM.y, node.rect.size.y - 2))
+		var x: int = node.rect.position.x + rng.randi_range(1, max(1, node.rect.size.x - w - 1))
+		var y: int = node.rect.position.y + rng.randi_range(1, max(1, node.rect.size.y - h - 1))
 		node.room = Rect2i(x, y, w, h)
 		rooms.append(node.room)
 		return
@@ -93,8 +93,8 @@ func _connect_rooms(node: BSPNode) -> void:
 		return
 	_connect_rooms(node.left)
 	_connect_rooms(node.right)
-	var a := _center(node.left.room)
-	var b := _center(node.right.room)
+	var a: Vector2i = _center(node.left.room)
+	var b: Vector2i = _center(node.right.room)
 	if rng.randf() > 0.5:
 		corridors.append(Rect2i(min(a.x, b.x), a.y, abs(b.x - a.x) + 1, 1))
 		corridors.append(Rect2i(b.x, min(a.y, b.y), 1, abs(b.y - a.y) + 1))
