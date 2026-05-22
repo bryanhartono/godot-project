@@ -2,12 +2,15 @@ extends Node2D
 
 const FILL_CHANCE: float = 0.35
 const AUTOMATA_PASSES: int = 3
-const TILE_SIZE: int = 32
 
 var _grid: Array[Array] = []
 var _room_size: Vector2i
 
+@onready var tilemap: TileMapLayer = $TileMapLayer
+
 func generate_traps(room_rect: Rect2i, rng: RandomNumberGenerator) -> void:
+	DungeonPainter.paint_room(tilemap, room_rect)
+
 	_room_size = room_rect.size
 	_grid = []
 	for y: int in _room_size.y:
@@ -17,7 +20,7 @@ func generate_traps(room_rect: Rect2i, rng: RandomNumberGenerator) -> void:
 		_grid.append(row)
 	for _i: int in AUTOMATA_PASSES:
 		_smooth()
-	_spawn_hazards(room_rect.position)
+	_spawn_hazards(room_rect)
 
 func _smooth() -> void:
 	var next: Array[Array] = []
@@ -42,12 +45,20 @@ func _neighbor_count(cx: int, cy: int) -> int:
 				count += _grid[ny][nx]
 	return count
 
-func _spawn_hazards(origin: Vector2i) -> void:
-	for y: int in _room_size.y:
-		for x: int in _room_size.x:
+func _spawn_hazards(rect: Rect2i) -> void:
+	var offset := Vector2(
+		-(rect.position.x + rect.size.x / 2.0),
+		-(rect.position.y + rect.size.y / 2.0)
+	)
+	var px := float(DungeonPainter.TILE_PX)
+	# Inset by 1 tile to stay inside walls
+	for y: int in range(1, _room_size.y - 1):
+		for x: int in range(1, _room_size.x - 1):
 			if _grid[y][x] == 1:
 				var hazard := ColorRect.new()
-				hazard.size = Vector2(TILE_SIZE, TILE_SIZE)
-				hazard.position = Vector2((origin.x + x) * TILE_SIZE, (origin.y + y) * TILE_SIZE)
+				hazard.size = Vector2(px, px)
+				var wx: float = (rect.position.x + x + offset.x) * px
+				var wy: float = (rect.position.y + y + offset.y) * px
+				hazard.position = Vector2(wx, wy)
 				hazard.color = Color(1.0, 0.2, 0.2, 0.35)
 				add_child(hazard)

@@ -1,7 +1,7 @@
 extends Node2D
 
-const ROOM_SPAWN_POS: Vector2 = Vector2(320.0, 240.0)
-const PLAYER_START: Vector2 = Vector2(240.0, 240.0)
+const ROOM_SPAWN_POS: Vector2 = Vector2(0.0, -48.0)
+const PLAYER_START: Vector2 = Vector2(0.0, 64.0)
 
 var _tagged_rooms: Array[Dictionary] = []
 var _room_index: int = 0
@@ -85,12 +85,12 @@ func _load_next_room() -> void:
 	_reposition_players()
 
 	match rd["type"]:
-		"combat":     _enter_combat()
+		"combat":     _enter_combat(rd)
 		"trap":       _enter_trap(rd)
 		"shop":       _enter_shop()
 		"treasure":   _enter_treasure()
 		"boss_entry": _enter_boss()
-		_:            _enter_combat()
+		_:            _enter_combat(rd)
 
 func _reposition_players() -> void:
 	var positions: Array = []
@@ -105,12 +105,14 @@ func _reposition_all(positions: Array) -> void:
 			if _players[i].is_multiplayer_authority():
 				_players[i].global_position = positions[i]
 
-func _enter_combat() -> void:
+func _enter_combat(rd: Dictionary = {}) -> void:
 	var room = preload("res://scenes/room.tscn").instantiate()
 	room.position = Vector2.ZERO
 	room.room_cleared.connect(_on_combat_cleared)
 	entities.add_child(room)
 	_active_room = room
+	if rd.has("rect"):
+		room.paint(rd["rect"])
 	var composer := WaveComposer.new()
 	var enemies := composer.compose(
 		RunManager.current_floor, RunManager.get_floor_budget(), RunManager.rng

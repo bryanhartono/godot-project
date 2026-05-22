@@ -7,6 +7,7 @@ signal room_cleared()
 var _enemies_alive: int = 0
 var _wave_started: bool = false
 
+@onready var tilemap: TileMapLayer = $TileMapLayer
 @onready var spawn_points: Node2D = $SpawnPoints
 @onready var spawner: MultiplayerSpawner = $MultiplayerSpawner
 
@@ -16,6 +17,16 @@ func _ready() -> void:
 
 func setup(type: String) -> void:
 	room_type = type
+
+func paint(rect: Rect2i) -> void:
+	DungeonPainter.paint_room(tilemap, rect)
+	_reposition_spawn_points(DungeonPainter.get_spawn_positions(rect))
+
+func _reposition_spawn_points(positions: Array[Vector2]) -> void:
+	var children: Array[Node] = spawn_points.get_children()
+	for i in children.size():
+		if i < positions.size():
+			(children[i] as Marker2D).position = positions[i]
 
 func start_wave(enemy_data_list: Array) -> void:
 	if _wave_started:
