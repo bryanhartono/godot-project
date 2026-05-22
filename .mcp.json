@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "godot-mcp-pro": {
+      "command": "node",
+      "args": [
+        "/Users/bryanhartono/Documents/Game Dev/MCP servers/godot-mcp/godot-mcp-pro-v1.12.0/server/build/index.js"
+      ],
+      "env": {
+        "GODOT_MCP_PORT": "6505"
+      }
+    }
+  }
+}
