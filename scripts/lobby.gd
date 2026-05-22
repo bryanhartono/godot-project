@@ -1,6 +1,9 @@
 extends Control
 
 const PLAYER_COLORS := ["Blue", "Red", "Green", "Grey"]
+const CHARACTER_TINTS := [Color(0.4, 0.6, 1.0), Color(1.0, 0.4, 0.4), Color(0.4, 1.0, 0.5), Color(0.7, 0.7, 0.7)]
+
+var _selected_character: int = 0
 
 @onready var room_code_label: Label = $VBox/RoomCodeLabel
 @onready var player_list: VBoxContainer = $VBox/PlayerList
@@ -10,6 +13,7 @@ const PLAYER_COLORS := ["Blue", "Red", "Green", "Grey"]
 @onready var start_button: Button = $VBox/StartButton
 @onready var solo_button: Button = $VBox/SoloButton
 @onready var status_label: Label = $VBox/StatusLabel
+@onready var char_row: HBoxContainer = $VBox/CharacterRow
 
 func _ready() -> void:
 	NetworkManager.player_connected.connect(_on_player_connected)
@@ -17,9 +21,30 @@ func _ready() -> void:
 	NetworkManager.connection_failed.connect(_on_connection_failed)
 	NetworkManager.server_disconnected.connect(_on_server_disconnected)
 	start_button.visible = false
+	_build_character_row()
+
+func _build_character_row() -> void:
+	for c in char_row.get_children():
+		c.queue_free()
+	for i in PLAYER_COLORS.size():
+		var btn := Button.new()
+		btn.text = PLAYER_COLORS[i]
+		btn.modulate = CHARACTER_TINTS[i]
+		btn.pressed.connect(_on_character_selected.bind(i))
+		char_row.add_child(btn)
+	_highlight_character(_selected_character)
+
+func _highlight_character(index: int) -> void:
+	var btns := char_row.get_children()
+	for i in btns.size():
+		btns[i].flat = (i != index)
+
+func _on_character_selected(index: int) -> void:
+	_selected_character = index
+	_highlight_character(index)
 
 func _on_host_pressed() -> void:
-	var code := NetworkManager.host_game()
+	var code := NetworkManager.host_game(_selected_character)
 	room_code_label.text = "Room Code: %s" % code
 	status_label.text = "Waiting for players…"
 	start_button.visible = true
@@ -33,7 +58,7 @@ func _on_join_pressed() -> void:
 	if addr.is_empty():
 		return
 	status_label.text = "Connecting…"
-	NetworkManager.join_game(addr)
+	NetworkManager.join_game(addr, _selected_character)
 	host_button.disabled = true
 	join_button.disabled = true
 	solo_button.disabled = true
@@ -46,9 +71,11 @@ func _on_start_pressed() -> void:
 		return
 	_start_game.rpc()
 
-func _on_player_connected(_id: int) -> void:
+func _on_player_connected(id: int) -> void:
 	_refresh_list()
 	status_label.text = "%d player(s) in room" % NetworkManager.get_player_count()
+	# Notify new peer of our character selection
+	NetworkManager._submit_character_selection.rpc_id(1, _selected_character)
 
 func _on_player_disconnected(_id: int) -> void:
 	_refresh_list()
@@ -72,9 +99,11 @@ func _refresh_list() -> void:
 	for child in player_list.get_children():
 		child.queue_free()
 	var i := 0
-	for _peer_id in NetworkManager.players:
+	for peer_id in NetworkManager.players:
+		var char_idx := NetworkManager.get_character_selection(peer_id)
 		var lbl := Label.new()
-		lbl.text = "Player %d — %s" % [i + 1, PLAYER_COLORS[i % 4]]
+		lbl.text = "Player %d — %s" % [i + 1, PLAYER_COLORS[char_idx]]
+		lbl.modulate = CHARACTER_TINTS[char_idx]
 		player_list.add_child(lbl)
 		i += 1
 

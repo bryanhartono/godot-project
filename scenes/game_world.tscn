@@ -13,6 +13,8 @@ zoom = Vector2(2.0, 2.0)
 
 [node name="Entities" type="Node2D" parent="."]
 
+[node name="EntitiesSpawner" type="MultiplayerSpawner" parent="Entities"]
+
 [node name="CardDraftLayer" type="CanvasLayer" parent="."]
 layer = 10
 visible = false

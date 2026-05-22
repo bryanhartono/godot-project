@@ -10,13 +10,22 @@ var _players: Array = []
 var _transitioning: bool = false
 
 @onready var entities: Node2D = $Entities
+@onready var entities_spawner: MultiplayerSpawner = $Entities/EntitiesSpawner
 @onready var card_draft_layer: CanvasLayer = $CardDraftLayer
 @onready var card_row: HBoxContainer = $CardDraftLayer/Center/CardRow
 
 func _ready() -> void:
+	entities_spawner.spawn_path = NodePath("..")
+	entities_spawner.add_spawnable_scene("res://scenes/room.tscn")
+	entities_spawner.add_spawnable_scene("res://scenes/boss.tscn")
+	entities_spawner.add_spawnable_scene("res://scenes/shop_npc.tscn")
+	entities_spawner.add_spawnable_scene("res://scenes/loot_drop.tscn")
+	entities_spawner.add_spawnable_scene("res://scenes/trap_room.tscn")
+
 	RunManager.floor_changed.connect(_on_floor_changed)
 	RunManager.run_ended.connect(_on_run_ended)
 	card_draft_layer.visible = false
+
 	if NetworkManager.is_solo():
 		_start_solo()
 	elif multiplayer.is_server():
@@ -43,14 +52,18 @@ func _spawn_multiplayer_players() -> void:
 	for i in peer_ids.size():
 		var p = preload("res://scenes/player.tscn").instantiate()
 		p.player_id = peer_ids[i]
-		p.character_index = i % 4
+		p.character_index = NetworkManager.get_character_selection(peer_ids[i])
 		p.name = "Player_%d" % peer_ids[i]
 		p.set_multiplayer_authority(peer_ids[i])
 		entities.add_child(p)
 		p.global_position = PLAYER_START + Vector2(i * 40.0, 0.0)
 		_players.append(p)
 
+# ---- Floor / room logic (server-only, clients receive via RPCs) ----
+
 func _on_floor_changed(floor_number: int) -> void:
+	if not NetworkManager.is_solo() and not multiplayer.is_server():
+		return
 	var gen := DungeonGenerator.new()
 	gen.generate(RunManager.run_seed + floor_number)
 	_tagged_rooms = gen.tag_rooms(floor_number)
@@ -80,9 +93,17 @@ func _load_next_room() -> void:
 		_:            _enter_combat()
 
 func _reposition_players() -> void:
+	var positions: Array = []
 	for i in _players.size():
-		if is_instance_valid(_players[i]):
-			_players[i].global_position = PLAYER_START + Vector2(i * 40.0, 0.0)
+		positions.append(PLAYER_START + Vector2(i * 40.0, 0.0))
+	_reposition_all.rpc(positions)
+
+@rpc("authority", "call_local", "reliable")
+func _reposition_all(positions: Array) -> void:
+	for i in _players.size():
+		if i < positions.size() and is_instance_valid(_players[i]):
+			if _players[i].is_multiplayer_authority():
+				_players[i].global_position = positions[i]
 
 func _enter_combat() -> void:
 	var room = preload("res://scenes/room.tscn").instantiate()
@@ -149,30 +170,56 @@ func _on_room_cleared() -> void:
 func _on_boss_died() -> void:
 	RunManager.end_run(true)
 
+# ---- Card draft (server draws pool, broadcasts to all peers) ----
+
 func _show_card_draft() -> void:
-	get_tree().paused = true
-	card_draft_layer.visible = true
-	for c in card_row.get_children():
-		c.queue_free()
 	var owned_tags: Array = []
 	for p in _players:
 		if is_instance_valid(p):
 			owned_tags.append_array(p.owned_upgrade_tags)
 	var drawn := UpgradeCard.draw_cards(owned_tags, RunManager.current_floor, RunManager.rng)
-	for card_data: Dictionary in drawn:
+	var card_ids: Array = drawn.map(func(c: Dictionary) -> String: return c["id"])
+	_present_card_draft.rpc(card_ids)
+
+@rpc("authority", "call_local", "reliable")
+func _present_card_draft(card_ids: Array) -> void:
+	get_tree().paused = true
+	card_draft_layer.visible = true
+	for c in card_row.get_children():
+		c.queue_free()
+	for card_id: String in card_ids:
+		var matches := UpgradeCard.ALL_CARDS.filter(
+			func(c: Dictionary) -> bool: return c["id"] == card_id
+		)
+		if matches.is_empty():
+			continue
+		var cd: Dictionary = matches[0]
 		var card_ui = preload("res://scenes/upgrade_card.tscn").instantiate()
-		card_ui.get_node("VBox/CardName").text = card_data["name"]
-		card_ui.get_node("VBox/CardDesc").text = card_data["desc"]
-		card_ui.get_node("VBox/SelectButton").pressed.connect(_on_card_selected.bind(card_data))
+		card_ui.get_node("VBox/CardName").text = cd["name"]
+		card_ui.get_node("VBox/CardDesc").text = cd["desc"]
+		var btn: Button = card_ui.get_node("VBox/SelectButton")
+		if NetworkManager.is_solo() or multiplayer.is_server():
+			btn.pressed.connect(_on_card_selected.bind(card_id))
+		else:
+			btn.text = "Host picks..."
+			btn.disabled = true
 		card_row.add_child(card_ui)
 
-func _on_card_selected(card_data: Dictionary) -> void:
+func _on_card_selected(card_id: String) -> void:
+	_apply_card_selection.rpc(card_id)
+
+@rpc("authority", "call_local", "reliable")
+func _apply_card_selection(card_id: String) -> void:
 	card_draft_layer.visible = false
 	get_tree().paused = false
+	var matches := UpgradeCard.ALL_CARDS.filter(
+		func(c: Dictionary) -> bool: return c["id"] == card_id
+	)
+	var tags: Array = matches[0].get("tags", []) if not matches.is_empty() else []
 	for p in _players:
-		if is_instance_valid(p):
-			UpgradeCard.apply_card(card_data["id"], p)
-			p.owned_upgrade_tags.append_array(card_data.get("tags", []))
+		if is_instance_valid(p) and p.is_multiplayer_authority():
+			UpgradeCard.apply_card(card_id, p)
+			p.owned_upgrade_tags.append_array(tags)
 	RunManager.advance_floor()
 
 func _on_run_ended(won: bool) -> void:

@@ -30,8 +30,8 @@ func _ready() -> void:
 
 func _apply_elite() -> void:
 	match elite_modifier:
-		"speedy":   move_speed *= 1.5
-		"armored":  max_hp = int(max_hp * 1.5); hp = max_hp
+		"speedy":  move_speed *= 1.5
+		"armored": max_hp = int(max_hp * 1.5); hp = max_hp
 	if elite_modifier != "":
 		modulate = Color(1.3, 0.8, 0.3)
 
@@ -89,6 +89,8 @@ func _find_nearest_player() -> Node2D:
 	var nearest: Node2D = null
 	var nearest_dist := INF
 	for p in get_tree().get_nodes_in_group("players"):
+		if p.is_ghost:
+			continue
 		var d := global_position.distance_to(p.global_position)
 		if d < nearest_dist:
 			nearest_dist = d
@@ -98,7 +100,7 @@ func _find_nearest_player() -> Node2D:
 func take_damage(amount: int, from_front: bool = false) -> void:
 	if state == State.DEAD:
 		return
-	var effective = amount / 2 if elite_modifier == "shielded" and from_front else amount
+	var effective := amount / 2 if elite_modifier == "shielded" and from_front else amount
 	hp -= effective
 	if hp <= 0:
 		_die()
@@ -107,6 +109,7 @@ func _die() -> void:
 	state = State.DEAD
 	set_physics_process(false)
 	died.emit(self)
+	RunManager.on_enemy_killed()
 	if sprite.sprite_frames and sprite.sprite_frames.has_animation("death"):
 		sprite.play("death")
 		await sprite.animation_finished
