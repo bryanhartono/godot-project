@@ -1,13 +1,13 @@
 class_name WaveComposer
 extends RefCounted
 
-# Each entry: cost, floor_unlock, hp, speed
+# Each entry: cost, floor_unlock, hp, speed, frames (SpriteFrames resource path)
 const ENEMY_TYPES: Array = [
-	{"cost": 2, "floor_unlock": 1, "hp": 20,  "speed": 50.0},
-	{"cost": 3, "floor_unlock": 2, "hp": 25,  "speed": 40.0},
-	{"cost": 4, "floor_unlock": 3, "hp": 15,  "speed": 80.0},
-	{"cost": 5, "floor_unlock": 4, "hp": 60,  "speed": 30.0},
-	{"cost": 7, "floor_unlock": 5, "hp": 40,  "speed": 55.0},
+	{"cost": 2, "floor_unlock": 1, "hp": 20,  "speed": 50.0, "frames": "res://resources/enemy_grunt_frames.tres"},
+	{"cost": 3, "floor_unlock": 2, "hp": 25,  "speed": 40.0, "frames": "res://resources/enemy_shooter_frames.tres"},
+	{"cost": 4, "floor_unlock": 3, "hp": 15,  "speed": 80.0, "frames": "res://resources/enemy_runner_frames.tres"},
+	{"cost": 5, "floor_unlock": 4, "hp": 60,  "speed": 30.0, "frames": "res://resources/enemy_turret_frames.tres"},
+	{"cost": 7, "floor_unlock": 5, "hp": 40,  "speed": 55.0, "frames": "res://resources/enemy_flying_frames.tres"},
 ]
 
 const ELITE_MODIFIERS: Array = ["shielded", "speedy", "exploder", "armored"]

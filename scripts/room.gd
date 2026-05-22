@@ -29,6 +29,10 @@ func start_wave(enemy_data_list: Array) -> void:
 		enemy.move_speed = data.get("speed", 60.0)
 		enemy.budget_cost = data.get("cost", 3)
 		enemy.elite_modifier = data.get("elite", "")
+		var frames_path: String = data.get("frames", "")
+		if not frames_path.is_empty():
+			var frames: SpriteFrames = load(frames_path)
+			enemy.get_node("AnimatedSprite2D").sprite_frames = frames
 		var sp_count := spawn_points.get_child_count()
 		if sp_count > 0:
 			enemy.global_position = spawn_points.get_child(i % sp_count).global_position

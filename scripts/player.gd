@@ -26,11 +26,20 @@ var _fire_timer: float = 0.0
 var _is_dead: bool = false
 var _is_ghost: bool = false
 
+const CHARACTER_FRAMES: Array = [
+	preload("res://resources/player_blue_frames.tres"),
+	preload("res://resources/player_red_frames.tres"),
+	preload("res://resources/player_green_frames.tres"),
+	preload("res://resources/player_grey_frames.tres"),
+]
+
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var collision: CollisionShape2D = $CollisionShape2D
 
 func _ready() -> void:
 	add_to_group("players")
+	sprite.sprite_frames = CHARACTER_FRAMES[character_index]
+	sprite.play("idle")
 	var passive = PASSIVES[character_index]
 	max_hp = BASE_HP + passive["hp_bonus"]
 	hp = max_hp
