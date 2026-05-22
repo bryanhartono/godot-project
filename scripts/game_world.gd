@@ -1,7 +1,7 @@
 extends Node2D
 
-const ROOM_SPAWN_POS: Vector2 = Vector2(0.0, -48.0)
-const PLAYER_START: Vector2 = Vector2(0.0, 64.0)
+const ROOM_SPAWN_POS: Vector2 = Vector2(0.0, 0.0)
+const PLAYER_START: Vector2 = Vector2(-48.0, 0.0)
 
 var _tagged_rooms: Array[Dictionary] = []
 var _room_index: int = 0
@@ -56,7 +56,7 @@ func _spawn_multiplayer_players() -> void:
 		p.name = "Player_%d" % peer_ids[i]
 		p.set_multiplayer_authority(peer_ids[i])
 		entities.add_child(p)
-		p.global_position = PLAYER_START + Vector2(i * 40.0, 0.0)
+		p.global_position = PLAYER_START + Vector2(i * 32.0, 0.0)
 		_players.append(p)
 
 # ---- Floor / room logic (server-only, clients receive via RPCs) ----
@@ -95,7 +95,7 @@ func _load_next_room() -> void:
 func _reposition_players() -> void:
 	var positions: Array = []
 	for i in _players.size():
-		positions.append(PLAYER_START + Vector2(i * 40.0, 0.0))
+		positions.append(PLAYER_START + Vector2(i * 32.0, 0.0))
 	_reposition_all.rpc(positions)
 
 @rpc("authority", "call_local", "reliable")

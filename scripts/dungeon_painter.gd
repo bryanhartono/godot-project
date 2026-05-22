@@ -39,12 +39,12 @@ static func build_tileset() -> TileSet:
 		Vector2(half, half), Vector2(-half, half),
 	])
 
-	for coord in [FLOOR] + wall_coords:
+	atlas.create_tile(FLOOR)
+	for coord: Vector2i in wall_coords:
 		atlas.create_tile(coord)
-		if coord != FLOOR:
-			var td: TileData = atlas.get_tile_data(coord, 0)
-			td.add_collision_polygon(0)
-			td.set_collision_polygon_points(0, 0, box)
+		var td: TileData = atlas.get_tile_data(coord, 0)
+		td.add_collision_polygon(0)
+		td.set_collision_polygon_points(0, 0, box)
 
 	ts.add_source(atlas, SOURCE_ID)
 	return ts
