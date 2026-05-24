@@ -7,6 +7,7 @@ enum State { SPAWN, IDLE, MOVE, SHOOT, DEAD }
 @export var max_hp: int = 30
 @export var move_speed: float = 60.0
 @export var budget_cost: int = 3
+@export var detection_range: float = 220.0
 @export var shoot_range: float = 200.0
 @export var shoot_cooldown: float = 2.0
 @export var projectile_damage: int = 10
@@ -44,8 +45,9 @@ func _physics_process(delta: float) -> void:
 		State.SHOOT: _tick_shoot(delta)
 
 func _tick_idle() -> void:
-	_target = _find_nearest_player()
-	if _target:
+	var nearest := _find_nearest_player()
+	if nearest and global_position.distance_to(nearest.global_position) <= detection_range:
+		_target = nearest
 		state = State.MOVE
 
 func _tick_move() -> void:
@@ -100,16 +102,26 @@ func _find_nearest_player() -> Node2D:
 func take_damage(amount: int, from_front: bool = false) -> void:
 	if state == State.DEAD:
 		return
-	var effective := amount / 2 if elite_modifier == "shielded" and from_front else amount
+	var effective := amount >> 1 if elite_modifier == "shielded" and from_front else amount
 	hp -= effective
+	AudioManager.play("enemy_hit", -3.0)
+	_flash_hit()
 	if hp <= 0:
 		_die()
+
+func _flash_hit() -> void:
+	sprite.modulate = Color(3.0, 3.0, 3.0, 1.0)
+	var tw := create_tween()
+	tw.tween_property(sprite, "modulate", Color.WHITE, 0.14)
 
 func _die() -> void:
 	state = State.DEAD
 	set_physics_process(false)
 	died.emit(self)
+	AudioManager.play("enemy_death", -3.0)
 	RunManager.on_enemy_killed()
+	Fx.burst(global_position, Color(1.0, 0.55, 0.1, 1.0), 10, 75.0, get_parent())
+	get_tree().call_group("game_world", "shake", 3.0, 0.14)
 	if sprite.sprite_frames and sprite.sprite_frames.has_animation("death"):
 		sprite.play("death")
 		await sprite.animation_finished

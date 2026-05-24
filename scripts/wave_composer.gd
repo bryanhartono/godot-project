@@ -10,7 +10,7 @@ const ENEMY_TYPES: Array[Dictionary] = [
 ]
 
 const ELITE_MODIFIERS: Array[String] = ["shielded", "speedy", "exploder", "armored"]
-const ELITE_CHANCE: float = 0.15
+const ELITE_CHANCE: float = 0.30
 
 func compose(floor_number: int, budget: int, rng: RandomNumberGenerator) -> Array[Dictionary]:
 	var available: Array[Dictionary] = ENEMY_TYPES.filter(

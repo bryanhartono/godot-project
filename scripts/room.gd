@@ -20,6 +20,7 @@ func setup(type: String) -> void:
 
 func paint(rect: Rect2i) -> void:
 	DungeonPainter.paint_room(tilemap, rect)
+	tilemap.notify_runtime_tile_data_update()
 	_reposition_spawn_points(DungeonPainter.get_spawn_positions(rect))
 
 func _reposition_spawn_points(positions: Array[Vector2]) -> void:
@@ -52,7 +53,8 @@ func start_wave(enemy_data_list: Array) -> void:
 			enemy.get_node("AnimatedSprite2D").sprite_frames = load(frames_path)
 		var sp_count := spawn_points.get_child_count()
 		if sp_count > 0:
-			enemy.global_position = spawn_points.get_child(i % sp_count).global_position
+			var base: Vector2 = (spawn_points.get_child(i % sp_count) as Node2D).global_position
+			enemy.global_position = base + Vector2(randf_range(-20.0, 20.0), randf_range(-20.0, 20.0))
 		enemy.died.connect(_on_enemy_died)
 		add_child(enemy)
 

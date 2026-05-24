@@ -10,6 +10,7 @@ var _room_size: Vector2i
 
 func generate_traps(room_rect: Rect2i, rng: RandomNumberGenerator) -> void:
 	DungeonPainter.paint_room(tilemap, room_rect)
+	tilemap.notify_runtime_tile_data_update()
 
 	_room_size = room_rect.size
 	_grid = []

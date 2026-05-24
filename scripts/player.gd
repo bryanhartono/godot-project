@@ -2,6 +2,7 @@ extends CharacterBody2D
 
 const BASE_HP = 100
 const BASE_FIRE_RATE = 0.5
+const ATTACK_RANGE: float = 280.0
 
 @export var player_id: int = 1
 @export var character_index: int = 0  # 0=Blue 1=Red 2=Green 3=Grey
@@ -34,13 +35,17 @@ var _fire_timer: float = 0.0
 var _chain_counter: int = 0
 var _is_dead: bool = false
 var _revive_cooldown: float = 0.0
+var _footstep_timer: float = 0.0
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var collision: CollisionShape2D = $CollisionShape2D
 @onready var revive_area: Area2D = $ReviveArea
 
 func _ready() -> void:
+	z_index = 10
 	add_to_group("players")
+	if is_multiplayer_authority() and DebugManager.is_noclip:
+		collision_mask = 0
 	sprite.sprite_frames = CHARACTER_FRAMES[character_index]
 	sprite.play("idle")
 	var passive = PASSIVES[character_index]
@@ -57,26 +62,33 @@ func _physics_process(delta: float) -> void:
 		_revive_cooldown -= delta
 	if _is_dead:
 		return
-	_handle_movement()
+	_handle_movement(delta)
 	if not is_ghost:
 		_handle_auto_fire(delta)
 		_check_revive_nearby()
 
-func _handle_movement() -> void:
+func _handle_movement(delta: float) -> void:
 	var dir := Vector2.ZERO
 	if Input.is_action_pressed("move_right"): dir.x += 1.0
 	if Input.is_action_pressed("move_left"):  dir.x -= 1.0
 	if Input.is_action_pressed("move_down"):  dir.y += 1.0
 	if Input.is_action_pressed("move_up"):    dir.y -= 1.0
-	var move_speed := speed * (0.4 if is_ghost else 1.0)
+	var debug_speed_mult := 3.0 if (DebugManager.is_fast and not is_ghost) else 1.0
+	var move_speed := speed * (0.4 if is_ghost else 1.0) * debug_speed_mult
 	velocity = dir.normalized() * move_speed
 	move_and_slide()
 	if dir != Vector2.ZERO:
 		if not is_ghost:
 			sprite.play("run")
+			_footstep_timer -= delta
+			if _footstep_timer <= 0.0:
+				_footstep_timer = 0.3
+				AudioManager.play("footstep", -14.0)
 		sprite.flip_h = dir.x < 0.0
-	elif not is_ghost:
-		sprite.play("idle")
+	else:
+		_footstep_timer = 0.0
+		if not is_ghost:
+			sprite.play("idle")
 
 func _handle_auto_fire(delta: float) -> void:
 	_fire_timer -= delta
@@ -92,13 +104,15 @@ func _find_nearest_enemy() -> Node2D:
 	var nearest_dist := INF
 	for e in get_tree().get_nodes_in_group("enemies"):
 		var d := global_position.distance_to(e.global_position)
-		if d < nearest_dist:
+		if d < nearest_dist and d <= ATTACK_RANGE:
 			nearest_dist = d
 			nearest = e
 	return nearest
 
 @rpc("call_local")
 func _shoot_at(target_pos: Vector2) -> void:
+	AudioManager.play("shoot", -6.0)
+	get_tree().call_group("game_world", "shake", 1.8, 0.07)
 	var base_dir := (target_pos - global_position).normalized()
 	var dirs: Array[Vector2] = [base_dir]
 	if has_meta("scatter"):
@@ -146,10 +160,21 @@ func _fire_chain_shot(base_damage: int) -> void:
 func take_damage(amount: int) -> void:
 	if _is_dead or is_ghost:
 		return
+	if DebugManager.is_invincible:
+		return
 	hp -= amount
+	AudioManager.play("player_hit")
+	_flash_hit()
+	get_tree().call_group("game_world", "shake", 6.0, 0.22)
+	get_tree().call_group("game_world", "on_player_damaged")
 	RunManager.on_player_hit()
 	if hp <= 0:
 		_die()
+
+func _flash_hit() -> void:
+	sprite.modulate = Color(3.0, 3.0, 3.0, 1.0)
+	var tw := create_tween()
+	tw.tween_property(sprite, "modulate", Color.WHITE, 0.15)
 
 func heal(amount: int) -> void:
 	hp = min(hp + amount, max_hp)
@@ -160,6 +185,7 @@ func on_kill() -> void:
 
 func _die() -> void:
 	_is_dead = true
+	AudioManager.play("player_death")
 	collision.set_deferred("disabled", true)
 	sprite.play("death")
 	await sprite.animation_finished
@@ -167,6 +193,12 @@ func _die() -> void:
 	_is_dead = false
 	modulate.a = 0.4
 	sprite.play("idle")
+
+func debug_kill() -> void:
+	_is_dead = false
+	is_ghost = false
+	hp = 0
+	_die()
 
 # ---- Revive ----
 
@@ -190,7 +222,7 @@ func _revive() -> void:
 		return
 	is_ghost = false
 	_is_dead = false
-	hp = max_hp / 4
+	hp = max_hp >> 2
 	collision.set_deferred("disabled", false)
 	modulate.a = 1.0
 	sprite.play("idle")

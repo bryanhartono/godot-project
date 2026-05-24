@@ -1,6 +1,6 @@
-[gd_resource type="SpriteFrames" load_steps=13 format=3]
+[gd_resource type="SpriteFrames" format=3 uid="uid://csl4ojkuv04ig"]
 
-[ext_resource type="Texture2D" path="res://assets/Tech Dungeon Roguelite - Asset Pack (v7)/NPC/npc x1.png" id="1"]
+[ext_resource type="Texture2D" uid="uid://dqwghobkmwbxp" path="res://assets/Tech Dungeon Roguelite - Asset Pack (v7)/NPC/npc x1.png" id="1"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_0"]
 atlas = ExtResource("1")
@@ -22,17 +22,9 @@ region = Rect2(96, 0, 32, 32)
 atlas = ExtResource("1")
 region = Rect2(128, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_5"]
-atlas = ExtResource("1")
-region = Rect2(160, 0, 32, 32)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_6"]
 atlas = ExtResource("1")
 region = Rect2(0, 32, 32, 32)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_7"]
-atlas = ExtResource("1")
-region = Rect2(32, 32, 32, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_8"]
 atlas = ExtResource("1")
@@ -42,9 +34,44 @@ region = Rect2(0, 64, 32, 32)
 atlas = ExtResource("1")
 region = Rect2(32, 64, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_10"]
-atlas = ExtResource("1")
-region = Rect2(64, 64, 32, 32)
-
 [resource]
-animations = [{"frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_0")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_1")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_2")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_3")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_4")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_5")}], "loop": true, "name": &"idle", "speed": 6.0}, {"frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_6")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_7")}], "loop": true, "name": &"idle_2", "speed": 5.0}, {"frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_8")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_9")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_10")}], "loop": true, "name": &"talk", "speed": 8.0}]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6")
+}],
+"loop": true,
+"name": &"idle_2",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_9")
+}],
+"loop": true,
+"name": &"talk",
+"speed": 8.0
+}]

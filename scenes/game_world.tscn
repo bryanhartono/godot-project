@@ -1,10 +1,24 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/game_world.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="2"]
+[ext_resource type="Shader" path="res://shaders/background_grid.gdshader" id="3"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bg"]
+shader = ExtResource("3")
 
 [node name="GameWorld" type="Node2D"]
 script = ExtResource("1")
+
+[node name="BgLayer" type="CanvasLayer" parent="."]
+layer = -100
+
+[node name="BgRect" type="ColorRect" parent="BgLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(1, 1, 1, 1)
+material = SubResource("ShaderMaterial_bg")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(2.0, 2.0)
@@ -33,3 +47,14 @@ anchor_bottom = 1.0
 [node name="CardRow" type="HBoxContainer" parent="CardDraftLayer/Center"]
 layout_mode = 2
 theme_override_constants/separation = 16
+
+[node name="VignetteLayer" type="CanvasLayer" parent="."]
+layer = 50
+
+[node name="Vignette" type="ColorRect" parent="VignetteLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.75, 0.0, 0.0, 0.38)
+modulate = Color(1, 1, 1, 0)
+mouse_filter = 2

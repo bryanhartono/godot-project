@@ -41,6 +41,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if _picked_up or not body.is_in_group("players"):
 		return
 	_picked_up = true
+	AudioManager.play("pickup")
 	body.heal(HP_AMOUNTS[rarity])
 	MetaManager.add_coins(COIN_AMOUNTS[rarity])
 	picked_up.emit()

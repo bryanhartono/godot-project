@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bda8ncy565llp"
+path="res://.godot/imported/alien remarks 3.wav-64523a012ff44f0abe126535829bd252.sample"
+
+[deps]
+
+source_file="res://assets/Audio/SFX/alien remarks 3.wav"
+dest_files=["res://.godot/imported/alien remarks 3.wav-64523a012ff44f0abe126535829bd252.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

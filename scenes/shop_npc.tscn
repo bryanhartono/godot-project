@@ -10,21 +10,37 @@ script = ExtResource("1")
 sprite_frames = ExtResource("2")
 animation = &"idle"
 
-[node name="ShopPanel" type="PanelContainer" parent="."]
+[node name="ShopLayer" type="CanvasLayer" parent="."]
+layer = 5
+
+[node name="ShopPanel" type="PanelContainer" parent="ShopLayer"]
 visible = false
-offset_left = 40.0
-offset_top = -80.0
-offset_right = 240.0
-offset_bottom = 40.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -130.0
+offset_right = 160.0
+offset_bottom = 130.0
 
-[node name="VBox" type="VBoxContainer" parent="ShopPanel"]
+[node name="VBox" type="VBoxContainer" parent="ShopLayer/ShopPanel"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="ShopPanel/VBox"]
+[node name="Title" type="Label" parent="ShopLayer/ShopPanel/VBox"]
+layout_mode = 2
 text = "Shop"
 horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
 
-[node name="ItemList" type="VBoxContainer" parent="ShopPanel/VBox"]
+[node name="ItemList" type="VBoxContainer" parent="ShopLayer/ShopPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
 
-[node name="CloseButton" type="Button" parent="ShopPanel/VBox"]
+[node name="CloseButton" type="Button" parent="ShopLayer/ShopPanel/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0.0, 36.0)
 text = "Leave"
+theme_override_font_sizes/font_size = 16

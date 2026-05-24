@@ -5,8 +5,8 @@ signal run_ended(won: bool)
 signal combo_changed(count: int)
 
 const BOSS_FLOOR_INTERVAL: int = 5
-const BASE_BUDGET: int = 10
-const DIFFICULTY_SCALAR: int = 3
+const BASE_BUDGET: int = 35
+const DIFFICULTY_SCALAR: int = 10
 const COMBO_WINDOW: float = 3.0
 const COMBO_CAP: int = 20
 
@@ -14,6 +14,7 @@ var current_floor: int = 0
 var run_seed: int = 0
 var rng: RandomNumberGenerator
 var combo_count: int = 0
+var kills: int = 0
 var _run_active: bool = false
 var _combo_timer: float = 0.0
 
@@ -30,6 +31,7 @@ func start_run(seed_value: int = -1) -> void:
 	rng.seed = run_seed
 	current_floor = 0
 	combo_count = 0
+	kills = 0
 	_run_active = true
 	advance_floor()
 
@@ -58,6 +60,7 @@ func get_combo_multiplier() -> float:
 func on_enemy_killed() -> void:
 	if not NetworkManager.is_solo() and not multiplayer.is_server():
 		return
+	kills += 1
 	var new_count: int = combo_count + 1
 	_set_combo(new_count)
 	if not NetworkManager.is_solo():

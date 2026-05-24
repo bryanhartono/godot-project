@@ -12,7 +12,7 @@ const ALL_CARDS: Array[Dictionary] = [
 	{"id": "berserker",       "name": "Berserker",       "desc": "+100% fire rate, -20% max HP",            "cursed": true,  "tags": ["fire_rate"]},
 ]
 
-static func draw_cards(owned_tags: Array[String], floor_number: int, rng: RandomNumberGenerator, count: int = 3) -> Array[Dictionary]:
+static func draw_cards(owned_tags: Array[String], floor_number: int, _rng: RandomNumberGenerator, count: int = 3) -> Array[Dictionary]:
 	var pool: Array[Dictionary] = ALL_CARDS.duplicate()
 	if floor_number < 3:
 		pool = pool.filter(func(c: Dictionary) -> bool: return not c["cursed"])

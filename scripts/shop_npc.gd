@@ -3,18 +3,61 @@ extends Node2D
 signal shop_closed()
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
-@onready var shop_panel: Control = $ShopPanel
-@onready var item_list: VBoxContainer = $ShopPanel/VBox/ItemList
-@onready var close_button: Button = $ShopPanel/VBox/CloseButton
+@onready var shop_panel: Control = $ShopLayer/ShopPanel
+@onready var item_list: VBoxContainer = $ShopLayer/ShopPanel/VBox/ItemList
+@onready var close_button: Button = $ShopLayer/ShopPanel/VBox/CloseButton
 
 var _shop_open: bool = false
 var _stock: Array = []
+var _players_nearby: Array = []
+var _hint_label: Label
 
 func _ready() -> void:
 	if sprite.sprite_frames and sprite.sprite_frames.has_animation("idle"):
 		sprite.play("idle")
 	shop_panel.visible = false
 	close_button.pressed.connect(close_shop)
+	_build_interact_area()
+	_build_hint_label()
+
+func _build_interact_area() -> void:
+	var area := Area2D.new()
+	area.collision_layer = 0
+	area.collision_mask = 2
+	var shape := CollisionShape2D.new()
+	var circle := CircleShape2D.new()
+	circle.radius = 64.0
+	shape.shape = circle
+	area.add_child(shape)
+	add_child(area)
+	area.body_entered.connect(func(b: Node2D) -> void:
+		if b.is_in_group("players"):
+			_players_nearby.append(b)
+	)
+	area.body_exited.connect(func(b: Node2D) -> void:
+		_players_nearby.erase(b)
+	)
+
+func _build_hint_label() -> void:
+	_hint_label = Label.new()
+	_hint_label.text = "[E] Open Shop"
+	_hint_label.add_theme_font_size_override("font_size", 15)
+	_hint_label.modulate = Color(0.7, 1.0, 0.9, 0.9)
+	_hint_label.visible = false
+	$ShopLayer.add_child(_hint_label)
+
+func _process(_delta: float) -> void:
+	var nearby := not _players_nearby.is_empty()
+	var screen_pos := get_viewport().get_canvas_transform() * global_position
+
+	_hint_label.visible = nearby and not _shop_open
+	if nearby and not _shop_open:
+		_hint_label.position = screen_pos + Vector2(-50.0, -72.0)
+		if Input.is_action_just_pressed("interact"):
+			open_shop()
+
+	if _shop_open:
+		shop_panel.position = screen_pos + Vector2(-160.0, -310.0)
 
 func open_shop() -> void:
 	if _shop_open:
@@ -32,6 +75,8 @@ func _rebuild_item_list() -> void:
 	for i in _stock.size():
 		var btn := Button.new()
 		btn.text = "%s  (%d coins)" % [_stock[i]["name"], _stock[i]["cost"]]
+		btn.custom_minimum_size = Vector2(0.0, 36.0)
+		btn.add_theme_font_size_override("font_size", 15)
 		btn.pressed.connect(_on_item_pressed.bind(i))
 		item_list.add_child(btn)
 

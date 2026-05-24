@@ -58,7 +58,7 @@ func get_player_count() -> int:
 	return max(players.size(), 1)
 
 func is_solo() -> bool:
-	return not multiplayer.has_multiplayer_peer()
+	return multiplayer.multiplayer_peer is OfflineMultiplayerPeer
 
 func get_character_selection(peer_id: int) -> int:
 	return _character_selections.get(peer_id, 0)

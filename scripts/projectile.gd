@@ -29,6 +29,7 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if is_enemy_projectile:
 		if body.is_in_group("players"):
+			Fx.burst(global_position, Color(1.0, 0.22, 0.1, 1.0), 5, 45.0, get_parent())
 			body.take_damage(damage)
 			queue_free()
 		return
@@ -48,6 +49,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if pierce_remaining > 0:
 		pierce_remaining -= 1
 	else:
+		Fx.burst(global_position, Color(0.85, 0.95, 1.0, 1.0), 5, 50.0, get_parent())
 		queue_free()
 
 func _apply_to_owner(fn: Callable) -> void:
