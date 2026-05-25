@@ -91,10 +91,10 @@ func _on_trigger(body: Node, index: int) -> void:
 
 func _activate_room(index: int) -> void:
 	match _tagged_rooms[index]["type"]:
-		"trap":       _enter_trap(index)
-		"shop":       _enter_shop(index)
-		"treasure":   _enter_treasure(index)
-		"boss_entry": _enter_boss(index)
+		"trap":       call_deferred("_enter_trap", index)
+		"shop":       call_deferred("_enter_shop", index)
+		"treasure":   call_deferred("_enter_treasure", index)
+		"boss_entry": call_deferred("_enter_boss", index)
 
 
 # ── Room type handlers ────────────────────────────────────────────────────────
@@ -142,8 +142,65 @@ func _finish_combat(index: int) -> void:
 		all_combat_cleared.emit()
 
 
-func _enter_trap(_index: int) -> void:
-	pass  # trap rooms are empty — hazard mechanics handled elsewhere
+func _enter_trap(index: int) -> void:
+	var rd: Dictionary = _tagged_rooms[index]
+	var room_size: Vector2i = rd["rect"].size
+	var offset := Vector2i(-(_map_size.x >> 1), -(_map_size.y >> 1))
+	var px := float(DungeonPainter.TILE_PX)
+	const FILL_CHANCE := 0.35
+	const PASSES := 3
+
+	var grid: Array[Array] = []
+	for y: int in room_size.y:
+		var row: Array[int] = []
+		for x: int in room_size.x:
+			row.append(1 if _rng.randf() < FILL_CHANCE else 0)
+		grid.append(row)
+
+	for _p: int in PASSES:
+		var next: Array[Array] = []
+		for y: int in room_size.y:
+			var row: Array[int] = []
+			for x: int in room_size.x:
+				var cnt := 0
+				for dy: int in range(-1, 2):
+					for dx: int in range(-1, 2):
+						if dx == 0 and dy == 0:
+							continue
+						var nx: int = x + dx
+						var ny: int = y + dy
+						if nx < 0 or ny < 0 or nx >= room_size.x or ny >= room_size.y:
+							cnt += 1
+						else:
+							cnt += grid[ny][nx]
+				row.append(1 if cnt >= 5 else 0)
+			next.append(row)
+		grid = next
+
+	for y: int in range(1, room_size.y - 1):
+		for x: int in range(1, room_size.x - 1):
+			if grid[y][x] == 1:
+				var wx := float(rd["rect"].position.x + x + offset.x) * px
+				var wy := float(rd["rect"].position.y + y + offset.y) * px
+				var center := Vector2(wx + px * 0.5, wy + px * 0.5)
+
+				var vis := ColorRect.new()
+				vis.size = Vector2(px, px)
+				vis.position = Vector2(wx, wy)
+				vis.color = Color(0.9, 0.4, 0.1, 0.12)
+				add_child(vis)
+
+				var area := Area2D.new()
+				area.collision_layer = 0
+				area.collision_mask = 2
+				area.set_script(preload("res://scripts/trap_hazard.gd"))
+				var cs := CollisionShape2D.new()
+				var shape := RectangleShape2D.new()
+				shape.size = Vector2(px * 0.85, px * 0.85)
+				cs.shape = shape
+				area.add_child(cs)
+				add_child(area)
+				area.global_position = center
 
 
 func _enter_shop(index: int) -> void:

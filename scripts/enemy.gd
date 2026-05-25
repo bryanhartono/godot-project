@@ -17,6 +17,7 @@ var hp: int
 var state: State = State.SPAWN
 var _shoot_timer: float = 0.0
 var _target: Node2D = null
+var _sync_tick: int = 0
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -43,6 +44,15 @@ func _physics_process(delta: float) -> void:
 		State.IDLE:  _tick_idle()
 		State.MOVE:  _tick_move()
 		State.SHOOT: _tick_shoot(delta)
+	if not NetworkManager.is_solo() and state != State.SPAWN and state != State.DEAD:
+		_sync_tick += 1
+		if _sync_tick % 3 == 0:
+			_sync_state.rpc(global_position, int(state))
+
+@rpc("authority", "call_remote", "unreliable_ordered")
+func _sync_state(pos: Vector2, state_int: int) -> void:
+	global_position = pos
+	state = state_int as State
 
 func _tick_idle() -> void:
 	var nearest := _find_nearest_player()
@@ -116,6 +126,7 @@ func _flash_hit() -> void:
 
 func _die() -> void:
 	state = State.DEAD
+	remove_from_group("enemies")
 	set_physics_process(false)
 	died.emit(self)
 	AudioManager.play("enemy_death", -3.0)

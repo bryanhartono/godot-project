@@ -31,6 +31,7 @@ zoom = Vector2(2.0, 2.0)
 
 [node name="CardDraftLayer" type="CanvasLayer" parent="."]
 layer = 10
+process_mode = 3
 visible = false
 
 [node name="Background" type="ColorRect" parent="CardDraftLayer"]

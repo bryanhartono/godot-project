@@ -5,6 +5,7 @@ const SAVE_PATH: String = "user://save.cfg"
 var coins: int = 0
 var unlocked_characters: Array[int] = [0, 1, 2]
 var permanent_upgrades: Dictionary = {}
+var selected_character: int = 0  # set by lobby before solo run starts
 
 func _ready() -> void:
 	load_data()

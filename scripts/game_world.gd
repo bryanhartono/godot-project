@@ -63,7 +63,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _start_solo() -> void:
 	var p = preload("res://scenes/player.tscn").instantiate()
 	p.player_id = 1
-	p.character_index = 0
+	p.character_index = MetaManager.selected_character
 	p.name = "Player_1"
 	entities.add_child(p)
 	_players = [p]
@@ -153,6 +153,7 @@ func _present_card_draft(card_ids: Array) -> void:
 			continue
 		var cd: Dictionary = matches[0]
 		var card_ui = preload("res://scenes/upgrade_card.tscn").instantiate()
+		_setup_card_header(card_ui, cd)
 		card_ui.get_node("VBox/CardName").text = cd["name"]
 		card_ui.get_node("VBox/CardDesc").text = cd["desc"]
 		var btn: Button = card_ui.get_node("VBox/SelectButton")
@@ -221,7 +222,7 @@ func _on_run_ended(won: bool) -> void:
 
 func _setup_fog() -> void:
 	var fog_layer := CanvasLayer.new()
-	fog_layer.layer = 3
+	fog_layer.layer = 1
 	add_child(fog_layer)
 	var fog_rect := ColorRect.new()
 	fog_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -230,6 +231,26 @@ func _setup_fog() -> void:
 	_fog_mat.shader = preload("res://shaders/fog_of_war.gdshader")
 	fog_rect.material = _fog_mat
 	fog_layer.add_child(fog_rect)
+
+func _setup_card_header(card_ui: Control, cd: Dictionary) -> void:
+	var icon_node: Control = card_ui.get_node("VBox/CardIcon")
+	var is_cursed: bool = cd.get("cursed", false)
+	var header := ColorRect.new()
+	header.color = Color(0.55, 0.08, 0.08, 0.85) if is_cursed else Color(0.0, 0.38, 0.55, 0.85)
+	header.custom_minimum_size = Vector2(0.0, 64.0)
+	header.size_flags_horizontal = Control.SIZE_FILL
+	var lbl := Label.new()
+	lbl.text = "⚠ CURSED" if is_cursed else "✦ UPGRADE"
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.modulate = Color(1.0, 0.6, 0.6) if is_cursed else Color(0.5, 0.9, 1.0)
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	header.add_child(lbl)
+	var vbox: VBoxContainer = icon_node.get_parent()
+	vbox.add_child(header)
+	vbox.move_child(header, 0)
+	icon_node.queue_free()
 
 func _setup_minimap() -> void:
 	var mm_layer := CanvasLayer.new()

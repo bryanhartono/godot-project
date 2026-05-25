@@ -69,6 +69,7 @@ func _on_join_pressed() -> void:
 	solo_button.disabled = true
 
 func _on_solo_pressed() -> void:
+	MetaManager.selected_character = _selected_character
 	get_tree().change_scene_to_file("res://scenes/game_world.tscn")
 
 func _on_start_pressed() -> void:

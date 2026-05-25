@@ -6,11 +6,13 @@ signal shop_closed()
 @onready var shop_panel: Control = $ShopLayer/ShopPanel
 @onready var item_list: VBoxContainer = $ShopLayer/ShopPanel/VBox/ItemList
 @onready var close_button: Button = $ShopLayer/ShopPanel/VBox/CloseButton
+@onready var _shop_title: Label = $ShopLayer/ShopPanel/VBox/Title
 
 var _shop_open: bool = false
 var _stock: Array = []
 var _players_nearby: Array = []
 var _hint_label: Label
+var _feedback_label: Label
 
 func _ready() -> void:
 	if sprite.sprite_frames and sprite.sprite_frames.has_animation("idle"):
@@ -19,6 +21,7 @@ func _ready() -> void:
 	close_button.pressed.connect(close_shop)
 	_build_interact_area()
 	_build_hint_label()
+	_build_feedback_label()
 
 func _build_interact_area() -> void:
 	var area := Area2D.new()
@@ -46,6 +49,16 @@ func _build_hint_label() -> void:
 	_hint_label.visible = false
 	$ShopLayer.add_child(_hint_label)
 
+func _build_feedback_label() -> void:
+	_feedback_label = Label.new()
+	_feedback_label.text = ""
+	_feedback_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.3))
+	_feedback_label.add_theme_font_size_override("font_size", 14)
+	_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var vbox: VBoxContainer = $ShopLayer/ShopPanel/VBox
+	vbox.add_child(_feedback_label)
+	vbox.move_child(_feedback_label, vbox.get_child_count() - 2)
+
 func _process(_delta: float) -> void:
 	var nearby := not _players_nearby.is_empty()
 	var screen_pos := get_viewport().get_canvas_transform() * global_position
@@ -57,6 +70,7 @@ func _process(_delta: float) -> void:
 			open_shop()
 
 	if _shop_open:
+		_shop_title.text = "SHOP  •  %d coins" % MetaManager.coins
 		shop_panel.position = screen_pos + Vector2(-160.0, -310.0)
 
 func open_shop() -> void:
@@ -70,13 +84,18 @@ func open_shop() -> void:
 	shop_panel.visible = true
 
 func _rebuild_item_list() -> void:
-	for c in item_list.get_children():
+	for c: Node in item_list.get_children():
 		c.queue_free()
-	for i in _stock.size():
+	for i: int in _stock.size():
+		var item: Dictionary = _stock[i]
+		var can_afford: bool = MetaManager.coins >= item["cost"]
 		var btn := Button.new()
-		btn.text = "%s  (%d coins)" % [_stock[i]["name"], _stock[i]["cost"]]
+		btn.text = "%s  (%d coins)" % [item["name"], item["cost"]]
 		btn.custom_minimum_size = Vector2(0.0, 36.0)
 		btn.add_theme_font_size_override("font_size", 15)
+		btn.disabled = not can_afford
+		if not can_afford:
+			btn.modulate = Color(1.0, 1.0, 1.0, 0.5)
 		btn.pressed.connect(_on_item_pressed.bind(i))
 		item_list.add_child(btn)
 
@@ -85,7 +104,13 @@ func _on_item_pressed(index: int) -> void:
 	if players.is_empty():
 		return
 	if try_buy(index, players[0]):
+		_feedback_label.text = ""
 		_rebuild_item_list()
+	else:
+		_feedback_label.text = "Not enough coins!"
+		var tw := create_tween()
+		tw.tween_interval(1.5)
+		tw.tween_callback(func() -> void: _feedback_label.text = "")
 
 func close_shop() -> void:
 	_shop_open = false
@@ -106,11 +131,17 @@ func try_buy(index: int, player: Node) -> bool:
 	return true
 
 func _generate_stock() -> Array:
-	return [
-		{"name": "Full Heal",  "cost": 30, "type": "heal", "value": 999},
-		{"name": "Damage Up",  "cost": 50, "type": "stat", "stat": "damage_mult", "value": 0.25},
-		{"name": "Speed Up",   "cost": 40, "type": "stat", "stat": "speed",       "value": 30.0},
+	var pool: Array = [
+		{"name": "Full Heal",    "cost": 30,  "type": "heal", "value": 999},
+		{"name": "Damage Up",    "cost": 50,  "type": "stat", "stat": "damage_mult", "value": 0.25},
+		{"name": "Speed Up",     "cost": 40,  "type": "stat", "stat": "speed",       "value": 30.0},
+		{"name": "Max HP Up",    "cost": 45,  "type": "stat", "stat": "max_hp",      "value": 25},
+		{"name": "Fire Rate Up", "cost": 55,  "type": "stat", "stat": "fire_rate",   "value": -0.08},
+		{"name": "Lifesteal",    "cost": 65,  "type": "meta", "meta": "vampiric"},
+		{"name": "Pierce Shot",  "cost": 70,  "type": "meta", "meta": "phantom"},
 	]
+	pool.shuffle()
+	return pool.slice(0, 4)
 
 func _apply_item(item: Dictionary, player: Node) -> void:
 	match item["type"]:
@@ -122,3 +153,11 @@ func _apply_item(item: Dictionary, player: Node) -> void:
 					player.damage_mult = minf(player.damage_mult + item["value"], 3.0)
 				"speed":
 					player.speed = minf(player.speed + item["value"], 300.0)
+				"max_hp":
+					player.max_hp += item["value"]
+					player.heal(item["value"])
+				"fire_rate":
+					player.fire_rate = maxf(player.fire_rate + item["value"], 0.15)
+		"meta":
+			if not player.has_meta(item["meta"]):
+				player.set_meta(item["meta"], true)

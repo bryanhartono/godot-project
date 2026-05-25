@@ -30,11 +30,10 @@ func _build_deck() -> void:
 		_pattern_deck.shuffle()
 		_pattern_deck.push_front(0)
 	else:
-		var tail = _pattern_deck.slice(1)
+		var tail := _pattern_deck.slice(1)
 		tail.shuffle()
 		_pattern_deck = [0] + tail
-	# Prevent phase 2 appearing back-to-back
-	for i in range(1, _pattern_deck.size()):
+	for i: int in range(1, _pattern_deck.size()):
 		if _pattern_deck[i] == 2 and _pattern_deck[i - 1] == 2:
 			_pattern_deck[i] = 1
 	_deck_index = 0
@@ -45,6 +44,21 @@ func _physics_process(delta: float) -> void:
 	_shoot_timer -= delta
 	if _shoot_timer <= 0.0:
 		_advance_pattern()
+	_move_toward_player()
+
+func _move_toward_player() -> void:
+	var target := _get_nearest_player()
+	if not target:
+		velocity = Vector2.ZERO
+		return
+	var dist := global_position.distance_to(target.global_position)
+	if dist < 100.0:
+		velocity = Vector2.ZERO
+	else:
+		velocity = (target.global_position - global_position).normalized() * move_speed
+	move_and_slide()
+	if velocity.x != 0.0:
+		sprite.flip_h = velocity.x < 0.0
 
 func _advance_pattern() -> void:
 	_current_phase = _pattern_deck[_deck_index]
@@ -71,9 +85,11 @@ func _execute_phase(phase: int) -> void:
 			_fire_burst()
 
 func _fire_spread() -> void:
-	for i in 5:
+	var target := _get_nearest_player()
+	var base_dir := (target.global_position - global_position).normalized() if target else Vector2.RIGHT
+	for i: int in 5:
 		var angle := deg_to_rad(-40.0 + i * 20.0)
-		_spawn_projectile(Vector2.RIGHT.rotated(angle))
+		_spawn_projectile(base_dir.rotated(angle))
 
 func _fire_laser() -> void:
 	var target := _get_nearest_player()
@@ -81,7 +97,7 @@ func _fire_laser() -> void:
 		_spawn_projectile((target.global_position - global_position).normalized(), 25)
 
 func _fire_burst() -> void:
-	for i in 8:
+	for i: int in 8:
 		_spawn_projectile(Vector2.RIGHT.rotated(deg_to_rad(i * 45.0)))
 
 func _spawn_projectile(dir: Vector2, damage: int = 15) -> void:
@@ -95,7 +111,9 @@ func _spawn_projectile(dir: Vector2, damage: int = 15) -> void:
 func _get_nearest_player() -> Node2D:
 	var nearest: Node2D = null
 	var nearest_dist := INF
-	for p in get_tree().get_nodes_in_group("players"):
+	for p: Node in get_tree().get_nodes_in_group("players"):
+		if p.is_ghost:
+			continue
 		var d := global_position.distance_to(p.global_position)
 		if d < nearest_dist:
 			nearest_dist = d
@@ -104,15 +122,27 @@ func _get_nearest_player() -> Node2D:
 
 func take_damage(amount: int) -> void:
 	hp -= amount
+	AudioManager.play("enemy_hit", -6.0)
+	_flash_hit()
 	if not _rage_mode and hp < max_hp * 0.4:
 		_rage_mode = true
 		_build_deck()
 		modulate = Color(1.5, 0.5, 0.5)
+		get_tree().call_group("game_world", "shake", 5.0, 0.3)
 	if hp <= 0:
 		_die()
 
+func _flash_hit() -> void:
+	sprite.modulate = Color(3.0, 3.0, 3.0, 1.0)
+	var target_col := Color(1.5, 0.5, 0.5) if _rage_mode else Color.WHITE
+	var tw := create_tween()
+	tw.tween_property(sprite, "modulate", target_col, 0.18)
+
 func _die() -> void:
 	set_physics_process(false)
+	AudioManager.play("enemy_death")
+	Fx.burst(global_position, Color(1.0, 0.3, 0.0, 1.0), 20, 120.0, get_parent())
+	get_tree().call_group("game_world", "shake", 8.0, 0.4)
 	died.emit()
 	if sprite.sprite_frames and sprite.sprite_frames.has_animation("death"):
 		sprite.play("death")
