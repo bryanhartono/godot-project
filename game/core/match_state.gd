@@ -77,3 +77,18 @@ func attack(attacker: BattleUnit, target: BattleUnit) -> bool:
 	if not target.is_alive():
 		board.remove_unit(target)  # removes from board; units[] keeps dead entries, filtered by is_alive()
 	return true
+
+func end_turn() -> void:
+	current_team = 1 - current_team
+	for u in units_for_team(current_team):
+		u.reset_turn()
+
+## Returns the winning team (0 or 1), or -1 if the match is ongoing.
+func winner() -> int:
+	var alive0 := units_for_team(0).size()
+	var alive1 := units_for_team(1).size()
+	if alive0 == 0:
+		return 1
+	if alive1 == 0:
+		return 0
+	return -1
