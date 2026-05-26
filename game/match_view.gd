@@ -188,7 +188,8 @@ func _sync_sprites() -> void:
 func _update_labels() -> void:
 	var w := _state.winner()
 	if w == -1:
-		_turn_label.text = "Turn: %s" % ("PLAYER (blue)" if _state.current_team == 0 else "ENEMY (red)")
+		_turn_label.text = "Turn: %s" % ("PLAYER" if _state.current_team == 0 else "ENEMY (red tint)")
 		_result_label.text = ""
 	else:
+		_turn_label.text = ""
 		_result_label.text = "%s WINS" % ("PLAYER" if w == 0 else "ENEMY")
