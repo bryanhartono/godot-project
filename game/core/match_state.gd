@@ -55,3 +55,25 @@ func move_unit(unit: BattleUnit, pos: Vector2i) -> bool:
 	board.relocate_unit(unit, pos)
 	unit.has_moved = true
 	return true
+
+## Living enemy units within Manhattan attack range.
+func legal_targets(unit: BattleUnit) -> Array[BattleUnit]:
+	var out: Array[BattleUnit] = []
+	for other in units:
+		if other.team == unit.team or not other.is_alive():
+			continue
+		var dist: int = abs(other.grid_pos.x - unit.grid_pos.x) + abs(other.grid_pos.y - unit.grid_pos.y)
+		if dist <= unit.data.atk_range:
+			out.append(other)
+	return out
+
+func attack(attacker: BattleUnit, target: BattleUnit) -> bool:
+	if attacker.has_acted:
+		return false
+	if not target in legal_targets(attacker):
+		return false
+	target.take_damage(attacker.data.atk)
+	attacker.has_acted = true
+	if not target.is_alive():
+		board.remove_unit(target)
+	return true
