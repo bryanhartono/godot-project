@@ -10,19 +10,14 @@ config_version=5
 
 [application]
 
-config/name="Grid Run"
-run/main_scene="res://scenes/main_menu.tscn"
+config/name="godot_project"
+run/main_scene=""
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
-config/run/main_scene="res://scenes/main_menu.tscn"
+config/run/main_scene=""
 
 [autoload]
 
-NetworkManager="*res://scripts/network_manager.gd"
-MetaManager="*res://scripts/meta_manager.gd"
-RunManager="*res://scripts/run_manager.gd"
-AudioManager="*res://scripts/audio_manager.gd"
-DebugManager="*res://scripts/debug_manager.gd"
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
 [editor_plugins]
@@ -31,7 +26,7 @@ enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg")
 
 [gui]
 
-theme/custom="res://resources/theme_main.tres"
+theme/custom=""
 theme/default_font_size=26.0
 
 [input]
