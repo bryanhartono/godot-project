@@ -75,5 +75,5 @@ func attack(attacker: BattleUnit, target: BattleUnit) -> bool:
 	target.take_damage(attacker.data.atk)
 	attacker.has_acted = true
 	if not target.is_alive():
-		board.remove_unit(target)
+		board.remove_unit(target)  # removes from board; units[] keeps dead entries, filtered by is_alive()
 	return true
