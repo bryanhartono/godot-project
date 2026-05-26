@@ -48,6 +48,7 @@ func legal_moves(unit: BattleUnit) -> Array[Vector2i]:
 	return result
 
 func move_unit(unit: BattleUnit, pos: Vector2i) -> bool:
+	# TODO(Phase2): enforce unit.team == current_team
 	if unit.has_moved:
 		return false
 	if not pos in legal_moves(unit):
@@ -68,6 +69,7 @@ func legal_targets(unit: BattleUnit) -> Array[BattleUnit]:
 	return out
 
 func attack(attacker: BattleUnit, target: BattleUnit) -> bool:
+	# TODO(Phase2): enforce attacker.team == current_team
 	if attacker.has_acted:
 		return false
 	if not target in legal_targets(attacker):
