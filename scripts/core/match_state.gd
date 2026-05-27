@@ -5,7 +5,7 @@ extends RefCounted
 ## attacks, turn order, win conditions, and ability activation.
 
 ## Preload so AbilityData.Type.* enum values resolve at compile time.
-const _AbilityData = preload("res://game/core/ability_data.gd")
+const _AbilityData = preload("res://scripts/core/ability_data.gd")
 
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 

@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" load_steps=6 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/Sprites/Outlined_Entities.png" id="1_archer"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_archer_0"]
+atlas = ExtResource("1_archer")
+region = Rect2(0, 64, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_archer_1"]
+atlas = ExtResource("1_archer")
+region = Rect2(16, 64, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_archer_2"]
+atlas = ExtResource("1_archer")
+region = Rect2(32, 64, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_archer_3"]
+atlas = ExtResource("1_archer")
+region = Rect2(48, 64, 16, 16)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_archer_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_archer_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_archer_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_archer_3")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

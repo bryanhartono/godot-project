@@ -1,7 +1,7 @@
 extends Node2D
 
 ## Thin presentation layer over MatchState. Renders an isometric board with
-## Polygon2D diamonds and unit Sprite2Ds, and turns clicks into engine calls.
+## Polygon2D diamonds and AnimatedSprite2D units, and turns clicks into engine calls.
 ## Hot-seat: one human controls both teams.
 
 const TILE_W := 64
@@ -9,8 +9,7 @@ const TILE_H := 32
 const BOARD_W := 7
 const BOARD_H := 7
 const UNIT_SCALE := 3.0
-const SPRITE_LIFT := 24.0
-const ENTITY_SHEET := "res://assets/Sprites/Outlined_Entities.png"
+const SPRITE_LIFT := 20.0
 
 const COLOR_LIGHT   := Color(0.30, 0.42, 0.30)
 const COLOR_DARK    := Color(0.24, 0.34, 0.24)
@@ -20,7 +19,7 @@ const COLOR_ABILITY := Color(0.95, 0.85, 0.20, 0.85)
 
 var _state: MatchState
 var _tiles: Dictionary = {}          # Vector2i -> Polygon2D
-var _sprites: Dictionary = {}        # BattleUnit -> Sprite2D
+var _sprites: Dictionary = {}        # BattleUnit -> AnimatedSprite2D
 var _selected: BattleUnit = null
 var _move_targets: Array[Vector2i] = []
 var _atk_targets: Array[BattleUnit] = []
@@ -87,13 +86,12 @@ func _load_squads() -> void:
 func _spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	var unit := BattleUnit.new(data, team, pos)
 	_state.add_unit(unit, pos)
-	var spr := Sprite2D.new()
-	var atlas := AtlasTexture.new()
-	atlas.atlas = load(ENTITY_SHEET)
-	atlas.region = Rect2(0, data.sprite_row * 16, 16, 16)
-	spr.texture = atlas
+	var spr := AnimatedSprite2D.new()
+	spr.sprite_frames = load("res://resources/monsters/%s.tres" % data.id)
 	spr.scale = Vector2(UNIT_SCALE, UNIT_SCALE)
 	spr.position = grid_to_screen(pos) - Vector2(0, SPRITE_LIFT)
+	spr.z_index = pos.x + pos.y
+	spr.play("idle")
 	if team == 1:
 		spr.modulate = Color(1.0, 0.65, 0.65)
 	add_child(spr)
@@ -203,12 +201,13 @@ func _refresh() -> void:
 
 func _sync_sprites() -> void:
 	for u in _sprites.keys():
-		var spr: Sprite2D = _sprites[u]
+		var spr: AnimatedSprite2D = _sprites[u]
 		if not u.is_alive():
 			spr.queue_free()
 			_sprites.erase(u)
 		else:
 			spr.position = grid_to_screen(u.grid_pos) - Vector2(0, SPRITE_LIFT)
+			spr.z_index = u.grid_pos.x + u.grid_pos.y
 
 func _update_labels() -> void:
 	var w := _state.winner()

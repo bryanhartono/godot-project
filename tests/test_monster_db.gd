@@ -2,9 +2,9 @@
 extends McpTestSuite
 
 ## MonsterDB has no class_name (autoload singleton). Instantiate via preload.
-const _MonsterDbScript = preload("res://game/core/monster_db.gd")
+const _MonsterDbScript = preload("res://scripts/core/monster_db.gd")
 ## Preload AbilityData explicitly so Type.* enum values resolve at parse time.
-const _AbilityData = preload("res://game/core/ability_data.gd")
+const _AbilityData = preload("res://scripts/core/ability_data.gd")
 
 func suite_name() -> String:
 	return "monster_db"
