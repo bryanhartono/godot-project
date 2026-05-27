@@ -1,7 +1,6 @@
-class_name MonsterDB
+## Autoload: all monster definitions. Access via the global singleton MonsterDB.
+## No class_name — avoids Godot autoload-vs-class-constructor ambiguity.
 extends Node
-
-## Autoload: all monster definitions. Call get_monster(&"id") from anywhere.
 
 var _all: Dictionary = {}  # StringName -> MonsterData
 
@@ -23,19 +22,19 @@ func _register(data: MonsterData) -> void:
 func _register_all() -> void:
 	# cost, max_hp, atk, move_range, atk_range, ability, sprite_row
 	# ── Bruisers ──────────────────────────────────────────────────────
-	_register(MonsterData.create(&"knight",  "Knight",  3,  8, 3, 3, 1, null,                              0))
-	_register(MonsterData.create(&"soldier", "Soldier", 2,  6, 2, 2, 1, null,                              4))
-	_register(MonsterData.create(&"goblin",  "Goblin",  2,  7, 3, 2, 1, null,                              9))
-	# ── Ranged ───────────────────────────────────────────────────────────
-	_register(MonsterData.create(&"orc",     "Orc",     2,  6, 2, 2, 2, null,                             12))
-	_register(MonsterData.create(&"archer",  "Archer",  2,  4, 2, 1, 3, null,                             24))
+	_register(MonsterData.create(&"knight",  "Knight",  3,  8, 3, 3, 1, null,                               0))
+	_register(MonsterData.create(&"soldier", "Soldier", 2,  6, 2, 2, 1, null,                               1))
+	_register(MonsterData.create(&"goblin",  "Goblin",  2,  7, 3, 2, 1, null,                               9))
+	# ── Ranged ────────────────────────────────────────────────────────
+	_register(MonsterData.create(&"orc",     "Orc",     2,  6, 2, 2, 2, null,                              12))
+	_register(MonsterData.create(&"archer",  "Archer",  2,  4, 2, 1, 3, null,                               4))
 	# ── Assassins ─────────────────────────────────────────────────────
-	_register(MonsterData.create(&"spider",  "Spider",  2,  5, 2, 4, 1, AbilityData.passive_poison(1),    17))
-	_register(MonsterData.create(&"bat",     "Bat",     2,  4, 3, 4, 1, null,                             30))
-	# ── Casters ─────────────────────────────────────────────────────────
-	_register(MonsterData.create(&"wraith",  "Wraith",  3,  5, 3, 2, 2, AbilityData.active_blink(4),      19))
-	_register(MonsterData.create(&"imp",     "Imp",     3,  5, 3, 2, 1, AbilityData.active_aoe_strike(1), 21))
-	# ── Tank ─────────────────────────────────────────────────────────────
-	_register(MonsterData.create(&"crab",    "Crab",    3, 10, 1, 2, 1, AbilityData.passive_tough(1),     26))
-	# ── Support (high range; no passive) ─────────────────────────────────
-	_register(MonsterData.create(&"ghost",   "Ghost",   2,  5, 1, 3, 2, null,                          32))
+	_register(MonsterData.create(&"spider",  "Spider",  2,  5, 2, 4, 1, AbilityData.passive_poison(1),     17))
+	_register(MonsterData.create(&"bat",     "Bat",     2,  4, 3, 4, 1, null,                              28))
+	# ── Casters ───────────────────────────────────────────────────────
+	_register(MonsterData.create(&"wraith",  "Wraith",  3,  5, 3, 2, 2, AbilityData.active_blink(4),       19))
+	_register(MonsterData.create(&"imp",     "Imp",     3,  5, 3, 2, 1, AbilityData.active_aoe_strike(1),  21))
+	# ── Tank ──────────────────────────────────────────────────────────
+	_register(MonsterData.create(&"crab",    "Crab",    3, 10, 1, 2, 1, AbilityData.passive_tough(1),      24))
+	# ── Support (high range; no passive) ─────────────────────────────
+	_register(MonsterData.create(&"ghost",   "Ghost",   2,  5, 1, 3, 2, null,                              30))
