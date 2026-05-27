@@ -9,27 +9,30 @@ const TILE_H := 32
 const BOARD_W := 7
 const BOARD_H := 7
 const UNIT_SCALE := 3.0
-const SPRITE_LIFT := 24.0  # lifts a 16*scale sprite so it sits on the diamond
+const SPRITE_LIFT := 24.0
 const ENTITY_SHEET := "res://assets/Sprites/Outlined_Entities.png"
 
-const COLOR_LIGHT := Color(0.30, 0.42, 0.30)
-const COLOR_DARK := Color(0.24, 0.34, 0.24)
-const COLOR_MOVE := Color(0.30, 0.55, 0.95, 0.85)
-const COLOR_ATTACK := Color(0.90, 0.30, 0.30, 0.85)
+const COLOR_LIGHT   := Color(0.30, 0.42, 0.30)
+const COLOR_DARK    := Color(0.24, 0.34, 0.24)
+const COLOR_MOVE    := Color(0.30, 0.55, 0.95, 0.85)
+const COLOR_ATTACK  := Color(0.90, 0.30, 0.30, 0.85)
+const COLOR_ABILITY := Color(0.95, 0.85, 0.20, 0.85)
 
 var _state: MatchState
-var _tiles: Dictionary = {}    # Vector2i -> Polygon2D
-var _sprites: Dictionary = {}  # BattleUnit -> Sprite2D
+var _tiles: Dictionary = {}          # Vector2i -> Polygon2D
+var _sprites: Dictionary = {}        # BattleUnit -> Sprite2D
 var _selected: BattleUnit = null
 var _move_targets: Array[Vector2i] = []
 var _atk_targets: Array[BattleUnit] = []
+var _ability_targets: Array[Vector2i] = []
 var _turn_label: Label
 var _result_label: Label
+var _info_label: Label
 
 func _ready() -> void:
 	_state = MatchState.new(Board.new(BOARD_W, BOARD_H))
 	_build_board()
-	_setup_units()
+	_load_squads()
 	_build_ui()
 	_setup_camera()
 	_refresh()
@@ -63,24 +66,31 @@ func _build_board() -> void:
 func _base_color(g: Vector2i) -> Color:
 	return COLOR_LIGHT if (g.x + g.y) % 2 == 0 else COLOR_DARK
 
-func _setup_units() -> void:
-	# Player team (0) — bottom of the board.
-	_spawn(0, 8, 3, 3, 1, 0, Vector2i(2, 5))    # row 0: knight (bruiser)
-	_spawn(24, 4, 2, 1, 3, 0, Vector2i(3, 6))   # row 24: archer (ranged)
-	_spawn(17, 5, 2, 4, 1, 0, Vector2i(4, 5))   # row 17: spider (fast)
-	# Enemy team (1) — top of the board.
-	_spawn(9, 7, 3, 2, 1, 1, Vector2i(2, 1))    # row 9: goblin
-	_spawn(26, 10, 1, 2, 1, 1, Vector2i(3, 0))  # row 26: crab (tank)
-	_spawn(30, 4, 3, 4, 1, 1, Vector2i(4, 1))   # row 30: bat (fast)
+func _load_squads() -> void:
+	# Player squad (team 0) -- bottom rows
+	var player_squad: Array = [
+		[&"knight", Vector2i(2, 5)],
+		[&"archer", Vector2i(3, 6)],
+		[&"spider", Vector2i(4, 5)],
+	]
+	for entry in player_squad:
+		_spawn_unit(MonsterDB.get_monster(entry[0]), 0, entry[1])
+	# Enemy squad (team 1) -- top rows, red-tinted
+	var enemy_squad: Array = [
+		[&"goblin", Vector2i(2, 1)],
+		[&"crab",   Vector2i(3, 0)],
+		[&"bat",    Vector2i(4, 1)],
+	]
+	for entry in enemy_squad:
+		_spawn_unit(MonsterDB.get_monster(entry[0]), 1, entry[1])
 
-func _spawn(frame_row: int, hp: int, atk: int, mv: int, rng: int, team: int, pos: Vector2i) -> void:
-	var data := MonsterData.create(StringName("u%d" % frame_row), "U%d" % frame_row, 1, hp, atk, mv, rng)
+func _spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	var unit := BattleUnit.new(data, team, pos)
 	_state.add_unit(unit, pos)
 	var spr := Sprite2D.new()
 	var atlas := AtlasTexture.new()
 	atlas.atlas = load(ENTITY_SHEET)
-	atlas.region = Rect2(0, frame_row * 16, 16, 16)
+	atlas.region = Rect2(0, data.sprite_row * 16, 16, 16)
 	spr.texture = atlas
 	spr.scale = Vector2(UNIT_SCALE, UNIT_SCALE)
 	spr.position = grid_to_screen(pos) - Vector2(0, SPRITE_LIFT)
@@ -103,6 +113,9 @@ func _build_ui() -> void:
 	btn.position = Vector2(16, 80)
 	btn.pressed.connect(_on_end_turn)
 	layer.add_child(btn)
+	_info_label = Label.new()
+	_info_label.position = Vector2(16, 120)
+	layer.add_child(_info_label)
 
 func _setup_camera() -> void:
 	var cam := Camera2D.new()
@@ -122,6 +135,11 @@ func _on_tile_clicked(g: Vector2i) -> void:
 		_deselect()
 		return
 	var clicked: BattleUnit = _state.board.get_unit_at(g)
+	# Ability target takes priority over normal attack target
+	if _selected != null and g in _ability_targets:
+		_state.use_ability(_selected, g)
+		_after_action()
+		return
 	if _selected != null and clicked != null and clicked in _atk_targets:
 		_state.attack(_selected, clicked)
 		_after_action()
@@ -142,6 +160,7 @@ func _after_action() -> void:
 		_selected = null
 		_move_targets = []
 		_atk_targets = []
+		_ability_targets = []
 	else:
 		_recompute_targets()
 	_sync_sprites()
@@ -151,14 +170,17 @@ func _recompute_targets() -> void:
 	if _selected == null:
 		_move_targets = []
 		_atk_targets = []
+		_ability_targets = []
 		return
 	_move_targets = [] if _selected.has_moved else _state.legal_moves(_selected)
 	_atk_targets = [] if _selected.has_acted else _state.legal_targets(_selected)
+	_ability_targets = _state.legal_ability_targets(_selected)
 
 func _deselect() -> void:
 	_selected = null
 	_move_targets = []
 	_atk_targets = []
+	_ability_targets = []
 	_refresh()
 
 func _on_end_turn() -> void:
@@ -174,6 +196,9 @@ func _refresh() -> void:
 	for u in _atk_targets:
 		if _tiles.has(u.grid_pos):
 			_tiles[u.grid_pos].color = COLOR_ATTACK
+	for g in _ability_targets:
+		if _tiles.has(g):
+			_tiles[g].color = COLOR_ABILITY
 	_update_labels()
 
 func _sync_sprites() -> void:
@@ -193,3 +218,15 @@ func _update_labels() -> void:
 	else:
 		_turn_label.text = ""
 		_result_label.text = "%s WINS" % ("PLAYER" if w == 0 else "ENEMY")
+	if _selected != null:
+		var ab_text := ""
+		if _selected.data.ability != null:
+			ab_text = "  [%s]" % AbilityData.Type.keys()[_selected.data.ability.type]
+		_info_label.text = "%s  HP:%d/%d%s" % [
+			_selected.data.display_name,
+			_selected.current_hp,
+			_selected.data.max_hp,
+			ab_text
+		]
+	else:
+		_info_label.text = ""
