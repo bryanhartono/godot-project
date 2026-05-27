@@ -10,8 +10,10 @@ extends Resource
 @export var atk: int = 1
 @export var move_range: int = 1
 @export var atk_range: int = 1
+@export var ability: AbilityData = null
+@export var sprite_row: int = 0
 
-static func create(p_id: StringName, p_name: String, p_cost: int, p_hp: int, p_atk: int, p_move: int, p_range: int) -> MonsterData:
+static func create(p_id: StringName, p_name: String, p_cost: int, p_hp: int, p_atk: int, p_move: int, p_range: int, p_ability: AbilityData = null, p_row: int = 0) -> MonsterData:
 	var d := MonsterData.new()
 	d.id = p_id
 	d.display_name = p_name
@@ -20,4 +22,6 @@ static func create(p_id: StringName, p_name: String, p_cost: int, p_hp: int, p_a
 	d.atk = p_atk
 	d.move_range = p_move
 	d.atk_range = p_range
+	d.ability = p_ability
+	d.sprite_row = p_row
 	return d

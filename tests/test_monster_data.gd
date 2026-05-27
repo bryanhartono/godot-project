@@ -19,3 +19,14 @@ func test_defaults_are_sane() -> void:
 	assert_eq(d.cost, 1)
 	assert_eq(d.max_hp, 1)
 	assert_eq(d.atk, 1)
+
+func test_create_with_ability_and_row() -> void:
+	var a := AbilityData.passive_poison(1)
+	var d := MonsterData.create(&"spider", "Spider", 2, 5, 2, 4, 1, a, 17)
+	assert_eq(d.ability, a)
+	assert_eq(d.sprite_row, 17)
+
+func test_create_defaults_ability_null_row_zero() -> void:
+	var d := MonsterData.create(&"x", "X", 1, 1, 1, 1, 1)
+	assert_true(d.ability == null)
+	assert_eq(d.sprite_row, 0)
