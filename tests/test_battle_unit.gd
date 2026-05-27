@@ -32,3 +32,9 @@ func test_reset_turn_clears_flags() -> void:
 	u.reset_turn()
 	assert_false(u.has_moved)
 	assert_false(u.has_acted)
+
+func test_poison_stacks_persists_across_reset_turn() -> void:
+	var u := BattleUnit.new(_knight(), 0, Vector2i.ZERO)
+	u.poison_stacks = 2
+	u.reset_turn()
+	assert_eq(u.poison_stacks, 2)  # poison does NOT reset on turn reset
