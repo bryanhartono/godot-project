@@ -19,6 +19,7 @@ config/run/main_scene="res://game/match_view.tscn"
 [autoload]
 
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+MonsterDB="*res://game/core/monster_db.gd"
 
 [editor_plugins]
 
@@ -26,7 +27,6 @@ enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg")
 
 [gui]
 
-theme/custom=""
 theme/default_font_size=26.0
 
 [input]
