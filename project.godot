@@ -28,6 +28,7 @@ enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg")
 [gui]
 
 theme/default_font_size=26.0
+theme/custom=""
 
 [input]
 

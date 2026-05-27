@@ -14,7 +14,7 @@ func get_monster(id: StringName) -> MonsterData:
 func all_monsters() -> Array[MonsterData]:
 	var out: Array[MonsterData] = []
 	for m in _all.values():
-		out.append(m as MonsterData)
+		out.append(m)
 	return out
 
 func _register(data: MonsterData) -> void:
@@ -37,5 +37,5 @@ func _register_all() -> void:
 	_register(MonsterData.create(&"imp",     "Imp",     3,  5, 3, 2, 1, AbilityData.active_aoe_strike(1), 21))
 	# ── Tank ─────────────────────────────────────────────────────────────
 	_register(MonsterData.create(&"crab",    "Crab",    3, 10, 1, 2, 1, AbilityData.passive_tough(1),     26))
-	# ── Support ──────────────────────────────────────────────────────────
-	_register(MonsterData.create(&"ghost",   "Ghost",   2,  5, 1, 3, 2, AbilityData.passive_tough(1),     32))
+	# ── Support (high range; no passive) ─────────────────────────────────
+	_register(MonsterData.create(&"ghost",   "Ghost",   2,  5, 1, 3, 2, null,                          32))
