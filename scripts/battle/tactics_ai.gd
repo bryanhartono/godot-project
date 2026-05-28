@@ -1,5 +1,6 @@
 ## Heuristic AI for the enemy team. Pure RefCounted — no Node or scene dependency.
 ## Never mutates MatchState directly; all simulation uses duplicate().
+class_name TacticsAI
 extends RefCounted
 
 class Action:
