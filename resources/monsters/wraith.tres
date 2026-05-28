@@ -1,14 +1,14 @@
-[gd_resource type="SpriteFrames" load_steps=10 format=3]
+[gd_resource type="SpriteFrames" format=3 uid="uid://ciwljt5bpx54y"]
 
-[ext_resource type="Texture2D" path="res://assets/Sprites/Outlined_Entities.png" id="1_wraith"]
+[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_wraith"]
 
-[sub_resource type="AtlasTexture" id="if0_wraith"]
+[sub_resource type="AtlasTexture" id="ab0_wraith"]
 atlas = ExtResource("1_wraith")
-region = Rect2(0, 304, 16, 16)
+region = Rect2(32, 320, 16, 16)
 
-[sub_resource type="AtlasTexture" id="if1_wraith"]
+[sub_resource type="AtlasTexture" id="ab1_wraith"]
 atlas = ExtResource("1_wraith")
-region = Rect2(16, 304, 16, 16)
+region = Rect2(48, 320, 16, 16)
 
 [sub_resource type="AtlasTexture" id="af0_wraith"]
 atlas = ExtResource("1_wraith")
@@ -26,33 +26,57 @@ region = Rect2(0, 320, 16, 16)
 atlas = ExtResource("1_wraith")
 region = Rect2(16, 320, 16, 16)
 
-[sub_resource type="AtlasTexture" id="ab0_wraith"]
+[sub_resource type="AtlasTexture" id="if0_wraith"]
 atlas = ExtResource("1_wraith")
-region = Rect2(32, 320, 16, 16)
+region = Rect2(0, 304, 16, 16)
 
-[sub_resource type="AtlasTexture" id="ab1_wraith"]
+[sub_resource type="AtlasTexture" id="if1_wraith"]
 atlas = ExtResource("1_wraith")
-region = Rect2(48, 320, 16, 16)
+region = Rect2(16, 304, 16, 16)
 
 [resource]
 animations = [{
-"frames": [{"duration": 1.0, "texture": SubResource("if0_wraith")}, {"duration": 1.0, "texture": SubResource("if1_wraith")}],
-"loop": true,
-"name": &"idle_front",
-"speed": 5.0
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("ab0_wraith")
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("af0_wraith")}, {"duration": 1.0, "texture": SubResource("af1_wraith")}],
+"duration": 1.0,
+"texture": SubResource("ab1_wraith")
+}],
+"loop": true,
+"name": &"attack_back",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("af0_wraith")
+}, {
+"duration": 1.0,
+"texture": SubResource("af1_wraith")
+}],
 "loop": true,
 "name": &"attack_front",
 "speed": 8.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("ib0_wraith")}, {"duration": 1.0, "texture": SubResource("ib1_wraith")}],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("ib0_wraith")
+}, {
+"duration": 1.0,
+"texture": SubResource("ib1_wraith")
+}],
 "loop": true,
 "name": &"idle_back",
 "speed": 5.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("ab0_wraith")}, {"duration": 1.0, "texture": SubResource("ab1_wraith")}],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("if0_wraith")
+}, {
+"duration": 1.0,
+"texture": SubResource("if1_wraith")
+}],
 "loop": true,
-"name": &"attack_back",
-"speed": 8.0
+"name": &"idle_front",
+"speed": 5.0
 }]

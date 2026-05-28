@@ -77,7 +77,7 @@ func _load_squads() -> void:
 	# Enemy squad (team 1) -- top rows, red-tinted
 	var enemy_squad: Array = [
 		[&"goblin", Vector2i(2, 1)],
-		[&"crab",   Vector2i(3, 0)],
+		[&"orc",    Vector2i(3, 0)],
 		[&"bat",    Vector2i(4, 1)],
 	]
 	for entry in enemy_squad:
@@ -87,7 +87,7 @@ func _spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	var unit := BattleUnit.new(data, team, pos)
 	_state.add_unit(unit, pos)
 	var spr := AnimatedSprite2D.new()
-	spr.sprite_frames = load("res://resources/monsters/%s.tres" % data.id)
+	spr.sprite_frames = load("res://resources/monsters/%s.tres" % data.sprite_stem())
 	spr.scale = Vector2(UNIT_SCALE, UNIT_SCALE)
 	spr.position = grid_to_screen(pos) - Vector2(0, SPRITE_LIFT)
 	spr.z_index = pos.x + pos.y

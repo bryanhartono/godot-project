@@ -20,14 +20,14 @@ func _register(data: MonsterData) -> void:
 	_all[data.id] = data
 
 func _register_all() -> void:
-	# cost, max_hp, atk, move_range, atk_range, ability, sprite_row
+	# cost, max_hp, atk, move_range, atk_range, ability, sprite_row, sprite_file
 	# ── Bruisers ──────────────────────────────────────────────────────
-	_register(MonsterData.create(&"knight",  "Knight",  3,  8, 3, 3, 1, null,                               0))
-	_register(MonsterData.create(&"soldier", "Soldier", 2,  6, 2, 2, 1, null,                               2))
-	_register(MonsterData.create(&"goblin",  "Goblin",  2,  7, 3, 2, 1, null,                               9))
+	_register(MonsterData.create(&"knight",  "Knight",  3,  8, 3, 3, 1, null,                               0, &"human_knight"))
+	_register(MonsterData.create(&"soldier", "Soldier", 2,  6, 2, 2, 1, null,                               2, &"human_soldier"))
+	_register(MonsterData.create(&"goblin",  "Goblin",  2,  7, 3, 2, 1, null,                               9, &"goblin_knight"))
 	# ── Ranged ────────────────────────────────────────────────────────
-	_register(MonsterData.create(&"orc",     "Orc",     2,  6, 2, 2, 2, null,                              11))
-	_register(MonsterData.create(&"archer",  "Archer",  2,  4, 2, 1, 3, null,                               4))
+	_register(MonsterData.create(&"orc",     "Orc",     2,  6, 2, 2, 2, null,                              11, &"goblin_soldier"))
+	_register(MonsterData.create(&"archer",  "Archer",  2,  4, 2, 1, 3, null,                               4, &"human_archer"))
 	# ── Assassins ─────────────────────────────────────────────────────
 	_register(MonsterData.create(&"spider",  "Spider",  2,  5, 2, 4, 1, AbilityData.passive_poison(1),     17))
 	_register(MonsterData.create(&"bat",     "Bat",     2,  4, 3, 4, 1, null,                              28))

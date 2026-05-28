@@ -1,14 +1,14 @@
-[gd_resource type="SpriteFrames" load_steps=10 format=3]
+[gd_resource type="SpriteFrames" format=3 uid="uid://cg40sr5rg3c2w"]
 
-[ext_resource type="Texture2D" path="res://assets/Sprites/Outlined_Entities.png" id="1_ghost"]
+[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_ghost"]
 
-[sub_resource type="AtlasTexture" id="if0_ghost"]
+[sub_resource type="AtlasTexture" id="ab0_ghost"]
 atlas = ExtResource("1_ghost")
-region = Rect2(0, 480, 16, 16)
+region = Rect2(32, 496, 16, 16)
 
-[sub_resource type="AtlasTexture" id="if1_ghost"]
+[sub_resource type="AtlasTexture" id="ab1_ghost"]
 atlas = ExtResource("1_ghost")
-region = Rect2(16, 480, 16, 16)
+region = Rect2(48, 496, 16, 16)
 
 [sub_resource type="AtlasTexture" id="af0_ghost"]
 atlas = ExtResource("1_ghost")
@@ -26,33 +26,57 @@ region = Rect2(0, 496, 16, 16)
 atlas = ExtResource("1_ghost")
 region = Rect2(16, 496, 16, 16)
 
-[sub_resource type="AtlasTexture" id="ab0_ghost"]
+[sub_resource type="AtlasTexture" id="if0_ghost"]
 atlas = ExtResource("1_ghost")
-region = Rect2(32, 496, 16, 16)
+region = Rect2(0, 480, 16, 16)
 
-[sub_resource type="AtlasTexture" id="ab1_ghost"]
+[sub_resource type="AtlasTexture" id="if1_ghost"]
 atlas = ExtResource("1_ghost")
-region = Rect2(48, 496, 16, 16)
+region = Rect2(16, 480, 16, 16)
 
 [resource]
 animations = [{
-"frames": [{"duration": 1.0, "texture": SubResource("if0_ghost")}, {"duration": 1.0, "texture": SubResource("if1_ghost")}],
-"loop": true,
-"name": &"idle_front",
-"speed": 5.0
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("ab0_ghost")
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("af0_ghost")}, {"duration": 1.0, "texture": SubResource("af1_ghost")}],
+"duration": 1.0,
+"texture": SubResource("ab1_ghost")
+}],
+"loop": true,
+"name": &"attack_back",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("af0_ghost")
+}, {
+"duration": 1.0,
+"texture": SubResource("af1_ghost")
+}],
 "loop": true,
 "name": &"attack_front",
 "speed": 8.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("ib0_ghost")}, {"duration": 1.0, "texture": SubResource("ib1_ghost")}],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("ib0_ghost")
+}, {
+"duration": 1.0,
+"texture": SubResource("ib1_ghost")
+}],
 "loop": true,
 "name": &"idle_back",
 "speed": 5.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("ab0_ghost")}, {"duration": 1.0, "texture": SubResource("ab1_ghost")}],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("if0_ghost")
+}, {
+"duration": 1.0,
+"texture": SubResource("if1_ghost")
+}],
 "loop": true,
-"name": &"attack_back",
-"speed": 8.0
+"name": &"idle_front",
+"speed": 5.0
 }]
