@@ -1,3 +1,6 @@
+class_name SquadPicker
+extends RefCounted
+
 ## Generates random budget-legal squads from MonsterDB.
 ## Uses only static methods — no instance needed.
 

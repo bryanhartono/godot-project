@@ -3,7 +3,7 @@ class_name WinLoseState
 extends BaseBattleState
 
 func enter(ctx: Node) -> void:
-	var winner := ctx.match_state.winner()
+	var winner: int = ctx.match_state.winner()
 	ctx.show_win_lose_overlay(winner)
 	# Phase 5 hook: ctx.ads_manager.show_interstitial(_on_ad_closed.bind(ctx))
 	# For now, overlay is shown immediately.

@@ -19,7 +19,7 @@ func exit(ctx: Node) -> void:
 func handle_input(ctx: Node, event: InputEvent) -> void:
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
-	var g := ctx.screen_to_grid(ctx.get_local_mouse_position())
+	var g: Vector2i = ctx.screen_to_grid(ctx.get_local_mouse_position())
 	_try_place(ctx, g)
 
 # ── Internal ──────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ func _highlight_valid_tiles(ctx: Node) -> void:
 			var g := Vector2i(x, y)
 			if not ctx.match_state.board.is_occupied(g):
 				valid.append(g)
-	ctx.highlight_tiles(valid, [], [])
+	ctx.highlight_tiles(valid, ([] as Array[BattleUnit]), ([] as Array[Vector2i]))
 
 func _update_label(ctx: Node) -> void:
 	var next_name := _queue[0].display_name if not _queue.is_empty() else ""
