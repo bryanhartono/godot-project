@@ -91,7 +91,7 @@ func _spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	spr.scale = Vector2(UNIT_SCALE, UNIT_SCALE)
 	spr.position = grid_to_screen(pos) - Vector2(0, SPRITE_LIFT)
 	spr.z_index = pos.x + pos.y
-	spr.play("idle")
+	spr.play("idle_front")
 	if team == 1:
 		spr.modulate = Color(1.0, 0.65, 0.65)
 	add_child(spr)
@@ -213,7 +213,7 @@ func _sync_sprites() -> void:
 			spr.position = grid_to_screen(u.grid_pos) - Vector2(0, SPRITE_LIFT)
 			spr.z_index = u.grid_pos.x + u.grid_pos.y
 			if not spr.is_playing():
-				spr.play("idle")
+				spr.play(spr.animation)
 
 func _update_labels() -> void:
 	var w := _state.winner()

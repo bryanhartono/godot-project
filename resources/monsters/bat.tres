@@ -1,39 +1,58 @@
-[gd_resource type="SpriteFrames" load_steps=6 format=3]
+[gd_resource type="SpriteFrames" load_steps=10 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/Sprites/Outlined_Entities.png" id="1_bat"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_bat_0"]
+[sub_resource type="AtlasTexture" id="if0_bat"]
 atlas = ExtResource("1_bat")
 region = Rect2(0, 448, 16, 16)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_bat_1"]
+[sub_resource type="AtlasTexture" id="if1_bat"]
 atlas = ExtResource("1_bat")
 region = Rect2(16, 448, 16, 16)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_bat_2"]
+[sub_resource type="AtlasTexture" id="af0_bat"]
 atlas = ExtResource("1_bat")
 region = Rect2(32, 448, 16, 16)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_bat_3"]
+[sub_resource type="AtlasTexture" id="af1_bat"]
 atlas = ExtResource("1_bat")
 region = Rect2(48, 448, 16, 16)
 
+[sub_resource type="AtlasTexture" id="ib0_bat"]
+atlas = ExtResource("1_bat")
+region = Rect2(0, 464, 16, 16)
+
+[sub_resource type="AtlasTexture" id="ib1_bat"]
+atlas = ExtResource("1_bat")
+region = Rect2(16, 464, 16, 16)
+
+[sub_resource type="AtlasTexture" id="ab0_bat"]
+atlas = ExtResource("1_bat")
+region = Rect2(32, 464, 16, 16)
+
+[sub_resource type="AtlasTexture" id="ab1_bat"]
+atlas = ExtResource("1_bat")
+region = Rect2(48, 464, 16, 16)
+
 [resource]
 animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_bat_0")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_bat_1")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_bat_2")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_bat_3")
-}],
+"frames": [{"duration": 1.0, "texture": SubResource("if0_bat")}, {"duration": 1.0, "texture": SubResource("if1_bat")}],
 "loop": true,
-"name": &"idle",
+"name": &"idle_front",
 "speed": 5.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("af0_bat")}, {"duration": 1.0, "texture": SubResource("af1_bat")}],
+"loop": true,
+"name": &"attack_front",
+"speed": 8.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("ib0_bat")}, {"duration": 1.0, "texture": SubResource("ib1_bat")}],
+"loop": true,
+"name": &"idle_back",
+"speed": 5.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("ab0_bat")}, {"duration": 1.0, "texture": SubResource("ab1_bat")}],
+"loop": true,
+"name": &"attack_back",
+"speed": 8.0
 }]
