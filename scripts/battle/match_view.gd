@@ -9,11 +9,11 @@ const TILE_H := 32
 const BOARD_W := 7
 const BOARD_H := 7
 const UNIT_SCALE := 3.0
-const SPRITE_LIFT := 20.0
+const SPRITE_LIFT := 8.0
 
 const COLOR_LIGHT   := Color(0.30, 0.42, 0.30)
 const COLOR_DARK    := Color(0.24, 0.34, 0.24)
-const COLOR_MOVE    := Color(0.30, 0.55, 0.95, 0.85)
+const COLOR_MOVE    := Color(0.30, 0.55, 0.95, 0.45)
 const COLOR_ATTACK  := Color(0.90, 0.30, 0.30, 0.85)
 const COLOR_ABILITY := Color(0.95, 0.85, 0.20, 0.85)
 
@@ -118,7 +118,7 @@ func _build_ui() -> void:
 func _setup_camera() -> void:
 	var cam := Camera2D.new()
 	cam.position = grid_to_screen(Vector2i(BOARD_W / 2, BOARD_H / 2))
-	cam.zoom = Vector2(1.5, 1.5)
+	cam.zoom = Vector2(1.0, 1.0)
 	add_child(cam)
 	cam.make_current()
 
@@ -170,8 +170,12 @@ func _recompute_targets() -> void:
 		_atk_targets = []
 		_ability_targets = []
 		return
-	_move_targets = [] if _selected.has_moved else _state.legal_moves(_selected)
-	_atk_targets = [] if _selected.has_acted else _state.legal_targets(_selected)
+	_move_targets.clear()
+	if not _selected.has_moved:
+		_move_targets = _state.legal_moves(_selected)
+	_atk_targets.clear()
+	if not _selected.has_acted:
+		_atk_targets = _state.legal_targets(_selected)
 	_ability_targets = _state.legal_ability_targets(_selected)
 
 func _deselect() -> void:
@@ -208,6 +212,8 @@ func _sync_sprites() -> void:
 		else:
 			spr.position = grid_to_screen(u.grid_pos) - Vector2(0, SPRITE_LIFT)
 			spr.z_index = u.grid_pos.x + u.grid_pos.y
+			if not spr.is_playing():
+				spr.play("idle")
 
 func _update_labels() -> void:
 	var w := _state.winner()
