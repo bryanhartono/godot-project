@@ -31,8 +31,8 @@ func _start_processing(ctx: Node) -> void:
 		return
 	var tween: Tween = ctx.create_tween()
 	for i in range(_actions.size()):
-		tween.tween_callback(_apply_next_action.bind(ctx, i)).set_delay(ACTION_DELAY * (i + 1))
-	tween.tween_callback(_finish_turn.bind(ctx)).set_delay(ACTION_DELAY * (_actions.size() + 1))
+		tween.tween_callback(_apply_next_action.bind(ctx, i)).set_delay(ACTION_DELAY)
+	tween.tween_callback(_finish_turn.bind(ctx)).set_delay(ACTION_DELAY)
 
 func _apply_next_action(ctx: Node, idx: int) -> void:
 	if idx >= _actions.size():

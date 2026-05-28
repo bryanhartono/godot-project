@@ -171,9 +171,13 @@ func _hard(state: MatchState, ai_team: int) -> Array:
 				var su := _mirror(sim, units[j])
 				if su != null:
 					_apply_option(sim, su, cand["sequence"][j])
-		# Simulate player's greedy response
+		# Simulate player's greedy response and apply actions to sim
 		sim.end_turn()
-		_easy(sim, player_team)
+		var player_actions := _easy(sim, player_team)
+		for pa in player_actions:
+			var pu := sim.board.get_unit_at(pa.unit.grid_pos)
+			if pu != null:
+				_apply_option(sim, pu, [pa.move_to, pa.action_type, pa.action_target])
 		var net := _score(sim, ai_team)
 		if net > best_net:
 			best_net = net
