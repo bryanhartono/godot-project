@@ -11,15 +11,20 @@ config_version=5
 [application]
 
 config/name="godot_project"
-run/main_scene="res://scenes/battle/match_view.tscn"
+run/main_scene="res://scenes/battle/skirmish_setup.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
-config/run/main_scene="res://game/match_view.tscn"
 
 [autoload]
 
-_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 MonsterDB="*res://scripts/core/monster_db.gd"
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+
+[display]
+
+window/size/viewport_width=540
+window/size/viewport_height=960
+window/handheld/orientation="portrait"
 
 [editor_plugins]
 
@@ -60,12 +65,6 @@ interact={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":69,"key_label":0,"unicode":101,"location":0,"echo":false,"script":null)
 ]
 }
-
-[display]
-
-window/size/viewport_width=540
-window/size/viewport_height=960
-window/handheld/orientation="portrait"
 
 [physics]
 

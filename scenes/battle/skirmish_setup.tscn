@@ -1,0 +1,38 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/battle/skirmish_setup.gd" id="1_setup"]
+
+[node name="SkirmishSetup" type="Node"]
+script = ExtResource("1_setup")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer"]
+offset_left = 40.0
+offset_top = 80.0
+offset_right = 500.0
+offset_bottom = 900.0
+
+[node name="Title" type="Label" parent="CanvasLayer/VBox"]
+text = "Skirmish"
+
+[node name="SquadLabel" type="Label" parent="CanvasLayer/VBox"]
+text = "Your squad: ..."
+
+[node name="RerollBtn" type="Button" parent="CanvasLayer/VBox"]
+text = "Reroll Squad"
+
+[node name="DiffLabel" type="Label" parent="CanvasLayer/VBox"]
+text = "Difficulty: Normal"
+
+[node name="EasyBtn" type="Button" parent="CanvasLayer/VBox"]
+text = "Easy"
+
+[node name="NormalBtn" type="Button" parent="CanvasLayer/VBox"]
+text = "Normal"
+
+[node name="HardBtn" type="Button" parent="CanvasLayer/VBox"]
+text = "Hard"
+
+[node name="StartBtn" type="Button" parent="CanvasLayer/VBox"]
+text = "Start Match"
