@@ -138,6 +138,20 @@ func legal_ability_targets(unit: BattleUnit) -> Array[Vector2i]:
 				out.append(t.grid_pos)
 	return out
 
+## Returns a deep copy for AI simulation. Mutating the copy never affects self.
+func duplicate() -> MatchState:
+	var copy := MatchState.new(Board.new(board.width, board.height))
+	copy.current_team = current_team
+	for u in units:
+		var u_copy := BattleUnit.new(u.data, u.team, u.grid_pos)
+		u_copy.current_hp = u.current_hp
+		u_copy.has_moved = u.has_moved
+		u_copy.has_acted = u.has_acted
+		u_copy.poison_stacks = u.poison_stacks
+		copy.units.append(u_copy)
+		copy.board.place_unit(u_copy, u_copy.grid_pos)
+	return copy
+
 ## Execute a unit's active ability targeting target_pos. Returns false if invalid.
 func use_ability(unit: BattleUnit, target_pos: Vector2i) -> bool:
 	if unit.team != current_team:
