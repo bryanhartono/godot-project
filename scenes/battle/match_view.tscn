@@ -1,6 +1,6 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://6875haii4hgh"]
 
-[ext_resource type="Script" path="res://scripts/battle/match_view.gd" id="1_matchview"]
+[ext_resource type="Script" uid="uid://cs186n1dh8ssp" path="res://scripts/battle/match_view.gd" id="1_matchview"]
 
 [node name="MatchView" type="Node2D" unique_id=1637778355]
 script = ExtResource("1_matchview")

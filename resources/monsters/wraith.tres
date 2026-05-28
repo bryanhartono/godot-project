@@ -2,46 +2,46 @@
 
 [ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_wraith"]
 
-[sub_resource type="AtlasTexture" id="ab0_wraith"]
-atlas = ExtResource("1_wraith")
-region = Rect2(32, 320, 16, 16)
-
-[sub_resource type="AtlasTexture" id="ab1_wraith"]
-atlas = ExtResource("1_wraith")
-region = Rect2(48, 320, 16, 16)
-
-[sub_resource type="AtlasTexture" id="af0_wraith"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_thu5r"]
 atlas = ExtResource("1_wraith")
 region = Rect2(32, 304, 16, 16)
 
-[sub_resource type="AtlasTexture" id="af1_wraith"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_ie3rf"]
 atlas = ExtResource("1_wraith")
 region = Rect2(48, 304, 16, 16)
 
-[sub_resource type="AtlasTexture" id="ib0_wraith"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_r3v8p"]
 atlas = ExtResource("1_wraith")
-region = Rect2(0, 320, 16, 16)
+region = Rect2(32, 288, 16, 16)
 
-[sub_resource type="AtlasTexture" id="ib1_wraith"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_831sx"]
 atlas = ExtResource("1_wraith")
-region = Rect2(16, 320, 16, 16)
+region = Rect2(48, 288, 16, 16)
 
-[sub_resource type="AtlasTexture" id="if0_wraith"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_d2yq5"]
 atlas = ExtResource("1_wraith")
 region = Rect2(0, 304, 16, 16)
 
-[sub_resource type="AtlasTexture" id="if1_wraith"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_f4yas"]
 atlas = ExtResource("1_wraith")
 region = Rect2(16, 304, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r1y8n"]
+atlas = ExtResource("1_wraith")
+region = Rect2(0, 288, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wctqy"]
+atlas = ExtResource("1_wraith")
+region = Rect2(16, 288, 16, 16)
 
 [resource]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("ab0_wraith")
+"texture": SubResource("AtlasTexture_thu5r")
 }, {
 "duration": 1.0,
-"texture": SubResource("ab1_wraith")
+"texture": SubResource("AtlasTexture_ie3rf")
 }],
 "loop": true,
 "name": &"attack_back",
@@ -49,10 +49,10 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("af0_wraith")
+"texture": SubResource("AtlasTexture_r3v8p")
 }, {
 "duration": 1.0,
-"texture": SubResource("af1_wraith")
+"texture": SubResource("AtlasTexture_831sx")
 }],
 "loop": true,
 "name": &"attack_front",
@@ -60,10 +60,10 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("ib0_wraith")
+"texture": SubResource("AtlasTexture_d2yq5")
 }, {
 "duration": 1.0,
-"texture": SubResource("ib1_wraith")
+"texture": SubResource("AtlasTexture_f4yas")
 }],
 "loop": true,
 "name": &"idle_back",
@@ -71,10 +71,10 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("if0_wraith")
+"texture": SubResource("AtlasTexture_r1y8n")
 }, {
 "duration": 1.0,
-"texture": SubResource("if1_wraith")
+"texture": SubResource("AtlasTexture_wctqy")
 }],
 "loop": true,
 "name": &"idle_front",

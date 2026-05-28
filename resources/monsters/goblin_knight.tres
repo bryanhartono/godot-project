@@ -1,47 +1,47 @@
 [gd_resource type="SpriteFrames" format=3 uid="uid://r4oyhad1jr1e"]
 
-[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_goblin"]
+[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_fsb8f"]
 
-[sub_resource type="AtlasTexture" id="af0_goblin"]
-atlas = ExtResource("1_goblin")
+[sub_resource type="AtlasTexture" id="AtlasTexture_r3e1f"]
+atlas = ExtResource("1_fsb8f")
 region = Rect2(32, 144, 16, 16)
 
-[sub_resource type="AtlasTexture" id="af1_goblin"]
-atlas = ExtResource("1_goblin")
+[sub_resource type="AtlasTexture" id="AtlasTexture_khtq1"]
+atlas = ExtResource("1_fsb8f")
 region = Rect2(48, 144, 16, 16)
 
-[sub_resource type="AtlasTexture" id="ab0_goblin"]
-atlas = ExtResource("1_goblin")
-region = Rect2(32, 160, 16, 16)
+[sub_resource type="AtlasTexture" id="AtlasTexture_0nrtk"]
+atlas = ExtResource("1_fsb8f")
+region = Rect2(32, 128, 16, 16)
 
-[sub_resource type="AtlasTexture" id="ab1_goblin"]
-atlas = ExtResource("1_goblin")
-region = Rect2(48, 160, 16, 16)
+[sub_resource type="AtlasTexture" id="AtlasTexture_wv0ii"]
+atlas = ExtResource("1_fsb8f")
+region = Rect2(48, 128, 16, 16)
 
-[sub_resource type="AtlasTexture" id="if0_goblin"]
-atlas = ExtResource("1_goblin")
+[sub_resource type="AtlasTexture" id="AtlasTexture_dvqkv"]
+atlas = ExtResource("1_fsb8f")
 region = Rect2(0, 144, 16, 16)
 
-[sub_resource type="AtlasTexture" id="if1_goblin"]
-atlas = ExtResource("1_goblin")
+[sub_resource type="AtlasTexture" id="AtlasTexture_jgqlq"]
+atlas = ExtResource("1_fsb8f")
 region = Rect2(16, 144, 16, 16)
 
-[sub_resource type="AtlasTexture" id="ib0_goblin"]
-atlas = ExtResource("1_goblin")
-region = Rect2(0, 160, 16, 16)
+[sub_resource type="AtlasTexture" id="AtlasTexture_fhd5h"]
+atlas = ExtResource("1_fsb8f")
+region = Rect2(0, 128, 16, 16)
 
-[sub_resource type="AtlasTexture" id="ib1_goblin"]
-atlas = ExtResource("1_goblin")
-region = Rect2(16, 160, 16, 16)
+[sub_resource type="AtlasTexture" id="AtlasTexture_44133"]
+atlas = ExtResource("1_fsb8f")
+region = Rect2(16, 128, 16, 16)
 
 [resource]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("af0_goblin")
+"texture": SubResource("AtlasTexture_r3e1f")
 }, {
 "duration": 1.0,
-"texture": SubResource("af1_goblin")
+"texture": SubResource("AtlasTexture_khtq1")
 }],
 "loop": true,
 "name": &"attack_back",
@@ -49,10 +49,10 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("ab0_goblin")
+"texture": SubResource("AtlasTexture_0nrtk")
 }, {
 "duration": 1.0,
-"texture": SubResource("ab1_goblin")
+"texture": SubResource("AtlasTexture_wv0ii")
 }],
 "loop": true,
 "name": &"attack_front",
@@ -60,10 +60,10 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("if0_goblin")
+"texture": SubResource("AtlasTexture_dvqkv")
 }, {
 "duration": 1.0,
-"texture": SubResource("if1_goblin")
+"texture": SubResource("AtlasTexture_jgqlq")
 }],
 "loop": true,
 "name": &"idle_back",
@@ -71,10 +71,10 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("ib0_goblin")
+"texture": SubResource("AtlasTexture_fhd5h")
 }, {
 "duration": 1.0,
-"texture": SubResource("ib1_goblin")
+"texture": SubResource("AtlasTexture_44133")
 }],
 "loop": true,
 "name": &"idle_front",
