@@ -243,7 +243,7 @@ func _build_ui() -> void:
 
 func _setup_camera() -> void:
 	var cam := Camera2D.new()
-	cam.position = grid_to_screen(Vector2i(BOARD_W / 2, BOARD_H / 2))
+	cam.position = grid_to_screen(Vector2i(BOARD_W >> 1, BOARD_H >> 1))
 	cam.zoom     = Vector2(1.0, 1.0)
 	add_child(cam)
 	cam.make_current()
