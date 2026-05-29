@@ -37,6 +37,9 @@ var _info_label:   Label
 var _end_btn:      Button
 var _auto_btn:     Button
 var _overlay:      Node = null   # win/lose overlay (CanvasLayer)
+var _loot_overlay: Node = null   # reward overlay shown after win/lose
+var _again_btn:    Button = null
+var _menu_btn:     Button = null
 
 # ── Lifecycle ─────────────────────────────────────────────────────────────────
 
@@ -142,22 +145,72 @@ func show_win_lose_overlay(winner: int) -> void:
 	banner.add_theme_font_size_override("font_size", 48)
 	vbox.add_child(banner)
 
-	var again_btn := Button.new()
-	again_btn.text = "Play Again"
-	again_btn.pressed.connect(_on_play_again)
-	vbox.add_child(again_btn)
+	_again_btn = Button.new()
+	_again_btn.text     = "Play Again"
+	_again_btn.disabled = true
+	_again_btn.pressed.connect(_on_play_again)
+	vbox.add_child(_again_btn)
 
-	var menu_btn := Button.new()
-	menu_btn.text = "Menu"
-	menu_btn.pressed.connect(_on_go_to_menu)
-	vbox.add_child(menu_btn)
+	_menu_btn = Button.new()
+	_menu_btn.text     = "Menu"
+	_menu_btn.disabled = true
+	_menu_btn.pressed.connect(_on_go_to_menu)
+	vbox.add_child(_menu_btn)
 
 	add_child(layer)
+	_show_loot_overlay(winner == 0)
 
 func hide_win_lose_overlay() -> void:
 	if _overlay != null:
 		_overlay.queue_free()
 		_overlay = null
+
+func _show_loot_overlay(won: bool) -> void:
+	var result := PlayerProfile.roll_loot(won)
+
+	var layer := CanvasLayer.new()
+	_loot_overlay = layer
+
+	var panel := ColorRect.new()
+	panel.color = Color(0, 0, 0, 0.70)
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.set_anchors_preset(Control.PRESET_CENTER)
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	layer.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Rewards"
+	title.add_theme_font_size_override("font_size", 32)
+	vbox.add_child(title)
+
+	var gems_lbl := Label.new()
+	gems_lbl.text = "+%d gems" % result["gems"]
+	vbox.add_child(gems_lbl)
+
+	var monster_id: StringName = result["monster"]
+	if monster_id != &"":
+		var mon_lbl := Label.new()
+		mon_lbl.text = "%s obtained!" % MonsterDB.get_monster(monster_id).display_name
+		vbox.add_child(mon_lbl)
+
+	var collect_btn := Button.new()
+	collect_btn.text = "Collect"
+	collect_btn.pressed.connect(_on_collect_loot)
+	vbox.add_child(collect_btn)
+
+	add_child(layer)
+
+func _on_collect_loot() -> void:
+	if _loot_overlay != null:
+		_loot_overlay.queue_free()
+		_loot_overlay = null
+	if _again_btn:
+		_again_btn.disabled = false
+	if _menu_btn:
+		_menu_btn.disabled = false
 
 # ── Button callbacks ──────────────────────────────────────────────────────────
 
