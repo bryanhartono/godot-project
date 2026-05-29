@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="godot_project"
-run/main_scene="res://scenes/battle/skirmish_setup.tscn"
+run/main_scene="res://scenes/hub/hub.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
 
@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 MonsterDB="*res://scripts/core/monster_db.gd"
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+PlayerProfile="*res://scripts/core/player_profile.gd"
 
 [display]
 

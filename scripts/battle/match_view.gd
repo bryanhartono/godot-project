@@ -171,14 +171,14 @@ func _on_auto_place() -> void:
 
 func _on_play_again() -> void:
 	var new_config           := MatchConfig.new()
-	new_config.player_squad   = SquadPicker.random_squad(10)
+	new_config.player_squad   = PlayerProfile.squad.duplicate()
 	new_config.enemy_squad    = SquadPicker.random_squad(10)
 	new_config.difficulty     = config.difficulty
 	Engine.set_meta("match_config", new_config)
 	get_tree().change_scene_to_file("res://scenes/battle/match_view.tscn")
 
 func _on_go_to_menu() -> void:
-	get_tree().change_scene_to_file("res://scenes/battle/skirmish_setup.tscn")
+	get_tree().change_scene_to_file("res://scenes/hub/hub.tscn")
 
 # ── Coordinate helpers ────────────────────────────────────────────────────────
 
