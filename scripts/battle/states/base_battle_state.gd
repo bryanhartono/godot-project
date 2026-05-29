@@ -6,11 +6,11 @@ extends RefCounted
 ## `ctx` is the MatchView node — states call its public methods to read/update the board.
 ## Never store a permanent reference to ctx; only use it within enter/exit/handle_input.
 
-func enter(ctx: Node) -> void:
+func enter(_ctx: Node) -> void:
 	pass
 
-func exit(ctx: Node) -> void:
+func exit(_ctx: Node) -> void:
 	pass
 
-func handle_input(ctx: Node, event: InputEvent) -> void:
+func handle_input(_ctx: Node, _event: InputEvent) -> void:
 	pass

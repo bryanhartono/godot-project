@@ -12,14 +12,6 @@ const BOARD_H     := 7
 const UNIT_SCALE  := 3.0
 const SPRITE_LIFT := 8.0
 
-## Explicit preloads so the VS Code GDScript language server resolves these
-## class_name types locally. Godot uses the global class registry at runtime.
-const BaseBattleState = preload("res://scripts/battle/states/base_battle_state.gd")
-const DeployState     = preload("res://scripts/battle/states/deploy_state.gd")
-const PlayerTurnState = preload("res://scripts/battle/states/player_turn_state.gd")
-const WinLoseState    = preload("res://scripts/battle/states/win_lose_state.gd")
-const AiTurnState     = preload("res://scripts/battle/states/ai_turn_state.gd")
-const SquadPicker     = preload("res://scripts/battle/squad_picker.gd")
 
 const COLOR_LIGHT   := Color(0.30, 0.42, 0.30)
 const COLOR_DARK    := Color(0.24, 0.34, 0.24)
