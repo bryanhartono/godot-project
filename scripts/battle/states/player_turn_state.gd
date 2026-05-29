@@ -87,7 +87,6 @@ func _refresh(ctx: Node) -> void:
 	_update_labels(ctx)
 
 func _update_labels(ctx: Node) -> void:
-	var ms: MatchState = ctx.match_state
 	var info := ""
 	if _selected != null:
 		var ab := ""
