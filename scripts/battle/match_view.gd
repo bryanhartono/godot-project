@@ -15,9 +15,9 @@ const BAR_LIFT    := SPRITE_LIFT + 28.0
 
 const COLOR_LIGHT   := Color(0.38, 0.47, 0.25)
 const COLOR_DARK    := Color(0.26, 0.33, 0.17)
-const COLOR_MOVE    := Color(0.30, 0.55, 0.95, 0.45)
-const COLOR_ATTACK  := Color(0.90, 0.30, 0.30, 0.85)
-const COLOR_ABILITY := Color(0.95, 0.85, 0.20, 0.85)
+const COLOR_MOVE    := Color(0.30, 0.55, 0.95, 0.25)
+const COLOR_ATTACK  := Color(0.90, 0.30, 0.30, 0.55)
+const COLOR_ABILITY := Color(0.95, 0.85, 0.20, 0.55)
 
 const PANEL_BG      := Color(0.08, 0.04, 0.01, 0.92)
 const INIT_SLOTS    := 7
