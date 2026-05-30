@@ -24,8 +24,9 @@ var match_state: MatchState
 var config:      MatchConfig
 
 ## Private rendering.
-var _tiles:   Dictionary = {}   # Vector2i -> Polygon2D
-var _sprites: Dictionary = {}   # BattleUnit -> AnimatedSprite2D
+var _tiles:      Dictionary = {}   # Vector2i -> Polygon2D
+var _sprites:    Dictionary = {}   # BattleUnit -> AnimatedSprite2D
+var _idle_anims: Dictionary = {}   # BattleUnit -> StringName
 
 ## State machine.
 var _current_state: BaseBattleState = null
@@ -82,7 +83,9 @@ func spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	spr.scale    = Vector2(UNIT_SCALE, UNIT_SCALE)
 	spr.position = grid_to_screen(pos) - Vector2(0, SPRITE_LIFT)
 	spr.z_index  = pos.x + pos.y
-	spr.play("idle_front")
+	var idle: StringName = "idle_back" if team == 0 else "idle_front"
+	_idle_anims[unit] = idle
+	spr.play(idle)
 	if team == 1:
 		spr.modulate = Color(1.0, 0.65, 0.65)
 	add_child(spr)
@@ -94,11 +97,24 @@ func sync_sprites() -> void:
 		if not u.is_alive():
 			spr.queue_free()
 			_sprites.erase(u)
+			_idle_anims.erase(u)
 		else:
 			spr.position = grid_to_screen(u.grid_pos) - Vector2(0, SPRITE_LIFT)
 			spr.z_index  = u.grid_pos.x + u.grid_pos.y
 			if not spr.is_playing():
-				spr.play(spr.animation)
+				spr.play(_idle_anims.get(u, &"idle_front"))
+
+func play_attack_animation(unit: BattleUnit) -> void:
+	var spr: AnimatedSprite2D = _sprites.get(unit)
+	if spr == null:
+		return
+	var atk_anim: StringName  = "attack_back"  if unit.team == 0 else "attack_front"
+	var idle_anim: StringName = _idle_anims.get(unit, &"idle_front")
+	spr.play(atk_anim)
+	get_tree().create_timer(0.4).timeout.connect(func():
+		if _sprites.has(unit) and is_instance_valid(_sprites[unit]):
+			_sprites[unit].play(idle_anim)
+	)
 
 func highlight_tiles(move_targets: Array[Vector2i],
                      atk_targets:  Array[BattleUnit],

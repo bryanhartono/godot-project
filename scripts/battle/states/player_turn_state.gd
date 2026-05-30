@@ -34,6 +34,7 @@ func _on_tile_clicked(ctx: Node, g: Vector2i) -> void:
 		return
 	if _selected != null and clicked != null and clicked in _atk_targets:
 		ms.attack(_selected, clicked)
+		ctx.play_attack_animation(_selected)
 		_after_action(ctx)
 		return
 	if _selected != null and g in _move_targets:

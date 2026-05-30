@@ -49,6 +49,7 @@ func _apply_next_action(ctx: Node, idx: int) -> void:
 			var target := ms.board.get_unit_at(action.action_target)
 			if target:
 				ms.attack(real_unit, target)
+				ctx.play_attack_animation(real_unit)
 		TacticsAI.Action.ABILITY:
 			ms.use_ability(real_unit, action.action_target)
 	ctx.sync_sprites()
