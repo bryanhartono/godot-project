@@ -1,36 +1,165 @@
 # scripts/hub/hub.gd
 extends Node
 
-@onready var _gems_label:    Label  = $CanvasLayer/CenterContainer/VBoxContainer/GemsLabel
-@onready var _trophies_label: Label = $CanvasLayer/CenterContainer/VBoxContainer/TrophiesLabel
-@onready var _daily_btn:     Button = $CanvasLayer/CenterContainer/VBoxContainer/DailyBtn
-@onready var _play_btn:      Button = $CanvasLayer/CenterContainer/VBoxContainer/PlayBtn
-@onready var _ranked_btn:    Button = $CanvasLayer/CenterContainer/VBoxContainer/RankedBtn
+var _gems_label:     Label
+var _trophies_label: Label
+var _daily_btn:      Button
+var _play_btn:       Button
+var _ranked_btn:     Button
 
 func _ready() -> void:
-	_build_background()
+	_build_ui()
 	PlayerProfile.tick_calendar()
-	$CanvasLayer/CenterContainer/VBoxContainer/DailyBtn.pressed.connect(_on_daily_pressed)
-	$CanvasLayer/CenterContainer/VBoxContainer/SquadBtn.pressed.connect(_on_squad_pressed)
-	$CanvasLayer/CenterContainer/VBoxContainer/PlayBtn.pressed.connect(_on_play_pressed)
-	$CanvasLayer/CenterContainer/VBoxContainer/RankedBtn.pressed.connect(_on_ranked_pressed)
 	_refresh()
 
-func _build_background() -> void:
+# ── UI construction ───────────────────────────────────────────────────────────
+
+func _build_ui() -> void:
+	var canvas: CanvasLayer = $CanvasLayer
+
 	var bg := ColorRect.new()
 	bg.color = Color(0.10, 0.06, 0.02)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	$CanvasLayer.add_child(bg)
-	$CanvasLayer.move_child(bg, 0)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	canvas.add_child(bg)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left",   28)
+	margin.add_theme_constant_override("margin_right",  28)
+	margin.add_theme_constant_override("margin_top",    52)
+	margin.add_theme_constant_override("margin_bottom", 36)
+	canvas.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	margin.add_child(vbox)
+
+	# — Title ————————————————————————————————————————————————
+	var title := Label.new()
+	title.text = "Monster Tactics"
+	title.add_theme_font_size_override("font_size", 42)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	var tagline := Label.new()
+	tagline.text = "Battle. Collect. Conquer."
+	tagline.add_theme_font_size_override("font_size", 17)
+	tagline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tagline.modulate = Color(0.75, 0.62, 0.42)
+	vbox.add_child(tagline)
+
+	vbox.add_child(_make_separator())
+
+	# — Stats panel ———————————————————————————————————————————
+	var stats_panel := Panel.new()
+	stats_panel.custom_minimum_size = Vector2(0, 64)
+	vbox.add_child(stats_panel)
+
+	var stats_margin := MarginContainer.new()
+	stats_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stats_margin.add_theme_constant_override("margin_left",   16)
+	stats_margin.add_theme_constant_override("margin_right",  16)
+	stats_margin.add_theme_constant_override("margin_top",    8)
+	stats_margin.add_theme_constant_override("margin_bottom", 8)
+	stats_panel.add_child(stats_margin)
+
+	var stats_row := HBoxContainer.new()
+	stats_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	stats_row.add_theme_constant_override("separation", 16)
+	stats_margin.add_child(stats_row)
+
+	_gems_label = Label.new()
+	_gems_label.text = "💎 Gems: 0"
+	_gems_label.add_theme_font_size_override("font_size", 20)
+	_gems_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_gems_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stats_row.add_child(_gems_label)
+
+	var divider := VSeparator.new()
+	stats_row.add_child(divider)
+
+	_trophies_label = Label.new()
+	_trophies_label.text = "🏆 Trophies: 0"
+	_trophies_label.add_theme_font_size_override("font_size", 20)
+	_trophies_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_trophies_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stats_row.add_child(_trophies_label)
+
+	# — Flexible spacer ——————————————————————————————————————
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(spacer)
+
+	# — Action buttons ————————————————————————————————————————
+	_daily_btn = _make_btn("Daily Reward", 58)
+	_daily_btn.pressed.connect(_on_daily_pressed)
+	vbox.add_child(_daily_btn)
+
+	var squad_btn := _make_btn("My Squad", 58)
+	squad_btn.pressed.connect(_on_squad_pressed)
+	vbox.add_child(squad_btn)
+
+	# Play button uses a green accent to stand out
+	_play_btn = _make_btn("Play", 72, Color(0.18, 0.50, 0.18))
+	_play_btn.add_theme_font_size_override("font_size", 26)
+	_play_btn.pressed.connect(_on_play_pressed)
+	vbox.add_child(_play_btn)
+
+	_ranked_btn = _make_btn("Ranked ★", 58)
+	_ranked_btn.pressed.connect(_on_ranked_pressed)
+	vbox.add_child(_ranked_btn)
+
+func _make_btn(label_text: String, min_h: int = 58, accent: Color = Color(-1, -1, -1)) -> Button:
+	var btn := Button.new()
+	btn.text = label_text
+	btn.custom_minimum_size = Vector2(0, min_h)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if accent.r >= 0.0:
+		btn.add_theme_stylebox_override("normal",  _color_btn_box(accent))
+		btn.add_theme_stylebox_override("hover",   _color_btn_box(accent.lightened(0.20), true))
+		btn.add_theme_stylebox_override("pressed", _color_btn_box(accent.darkened(0.25)))
+	return btn
+
+func _color_btn_box(color: Color, glow: bool = false) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color     = color
+	box.border_color = color.darkened(0.30)
+	box.set_corner_radius_all(4)
+	box.set_border_width_all(3)
+	box.border_width_bottom = 4
+	box.border_width_right  = 4
+	box.content_margin_left   = 16.0
+	box.content_margin_right  = 16.0
+	box.content_margin_top    = 10.0
+	box.content_margin_bottom = 10.0
+	box.anti_aliasing = true
+	box.shadow_offset = Vector2(2, 3)
+	if glow:
+		box.shadow_color = Color(0.20, 0.80, 0.20, 0.45)
+		box.shadow_size  = 8
+	else:
+		box.shadow_color = Color(0.0, 0.0, 0.0, 0.55)
+		box.shadow_size  = 4
+	return box
+
+func _make_separator() -> HSeparator:
+	var sep := HSeparator.new()
+	sep.custom_minimum_size = Vector2(0, 4)
+	return sep
+
+# ── State ─────────────────────────────────────────────────────────────────────
 
 func _refresh() -> void:
-	_gems_label.text    = "Gems: %d" % PlayerProfile.gems
-	_trophies_label.text = "Trophies: %d" % PlayerProfile.trophies
+	_gems_label.text     = "💎  %d" % PlayerProfile.gems
+	_trophies_label.text = "🏆  %d" % PlayerProfile.trophies
 	var squad_empty := PlayerProfile.squad.is_empty()
 	_play_btn.disabled   = squad_empty
 	_ranked_btn.disabled = squad_empty
 	var status: Dictionary = PlayerProfile.daily_status()
-	_daily_btn.text = "Daily Reward — READY" if not status["claimed"] else "Daily Reward"
+	_daily_btn.text = "Daily Reward  —  READY!" if not status["claimed"] else "Daily Reward"
+
+# ── Button handlers ───────────────────────────────────────────────────────────
 
 func _on_daily_pressed() -> void:
 	AudioManager.play_sfx(&"ui_click")
@@ -60,12 +189,14 @@ func _on_ranked_pressed() -> void:
 	Engine.set_meta("match_config", cfg)
 	get_tree().change_scene_to_file("res://scenes/battle/match_view.tscn")
 
+# ── Calendar popup ────────────────────────────────────────────────────────────
+
 func _show_calendar_popup() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
 
 	var bg := ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.65)
+	bg.color = Color(0, 0, 0, 0.70)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(bg)
 
@@ -75,7 +206,7 @@ func _show_calendar_popup() -> void:
 
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 10)
+	vbox.add_theme_constant_override("separation", 12)
 	center.add_child(vbox)
 
 	var title := Label.new()
@@ -98,7 +229,7 @@ func _show_calendar_popup() -> void:
 		var day_num := i + 1
 		var slot := VBoxContainer.new()
 		slot.alignment = BoxContainer.ALIGNMENT_CENTER
-		slot.custom_minimum_size = Vector2(50, 0)
+		slot.custom_minimum_size = Vector2(52, 0)
 		hbox.add_child(slot)
 
 		var day_lbl := Label.new()

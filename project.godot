@@ -78,4 +78,4 @@ interact={
 textures/canvas_textures/default_texture_filter=0.0
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
-environment/default_clear_color=Color(0.082, 0.047, 0.020, 1)
+environment/default_clear_color=Color(0.082, 0.047, 0.02, 1)

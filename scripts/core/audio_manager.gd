@@ -18,8 +18,8 @@ func _ready() -> void:
 	for key: StringName in _CLIPS:
 		_streams[key] = load(_CLIPS[key])
 
-func play_sfx(name: StringName) -> void:
-	var stream: AudioStream = _streams.get(name)
+func play_sfx(_name: StringName) -> void:
+	var stream: AudioStream = _streams.get(_name)
 	if stream == null:
 		return
 	var player := AudioStreamPlayer.new()

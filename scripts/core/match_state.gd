@@ -11,6 +11,9 @@ const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), 
 
 var board: Board
 var units: Array[BattleUnit] = []
+## The unit whose turn it is right now. Null before initialize_initiative().
+var active_unit: BattleUnit = null
+## Convenience alias; kept for AI code that reads current_team.
 var current_team: int = 0
 
 func _init(p_board: Board = null) -> void:
@@ -26,6 +29,104 @@ func units_for_team(team: int) -> Array[BattleUnit]:
 		if u.team == team and u.is_alive():
 			out.append(u)
 	return out
+
+# ── Initiative (CT / charge-time system) ─────────────────────────────────────
+
+## Call once after all units are placed. Determines who acts first.
+func initialize_initiative() -> void:
+	for u: BattleUnit in units:
+		u.ct = 0.0
+	active_unit = null
+	_find_next_unit()
+
+## Call when the active unit has fully resolved their turn (acted or waited).
+## Subtracts 100 CT from the unit that just acted, then finds the next one.
+func advance_initiative() -> void:
+	if active_unit != null:
+		active_unit.ct = maxf(0.0, active_unit.ct - 100.0)
+	_find_next_unit()
+
+## Internal: tick CT for all alive units until the next one reaches 100, set active_unit.
+func _find_next_unit() -> void:
+	var alive: Array[BattleUnit] = []
+	for u: BattleUnit in units:
+		if u.is_alive():
+			alive.append(u)
+	if alive.is_empty():
+		active_unit = null
+		return
+
+	# Minimum ticks until any unit hits 100 CT.
+	var min_ticks: float = 1e9
+	for u: BattleUnit in alive:
+		var ticks: float = maxf(0.0, 100.0 - u.ct) / float(u.data.speed)
+		if ticks < min_ticks:
+			min_ticks = ticks
+
+	for u: BattleUnit in alive:
+		u.ct += min_ticks * float(u.data.speed)
+
+	# Pick the unit with the highest CT; speed as tiebreak, then array order.
+	var next: BattleUnit = alive[0]
+	for u: BattleUnit in alive:
+		if u.ct > next.ct or (u.ct == next.ct and u.data.speed > next.data.speed):
+			next = u
+
+	next.has_moved = false
+	next.has_acted = false
+	active_unit = next
+	current_team = active_unit.team
+
+	# Tick poison at start of this unit's turn.
+	if active_unit.poison_stacks > 0:
+		active_unit.take_damage(active_unit.poison_stacks)
+		if not active_unit.is_alive():
+			board.remove_unit(active_unit)
+			_find_next_unit()
+			return
+
+## Peek at the next N units in initiative order without mutating state.
+## Returns an array of BattleUnit in the order they will act.
+func peek_initiative(n: int) -> Array[BattleUnit]:
+	var result: Array[BattleUnit] = []
+	if active_unit == null:
+		return result
+
+	var temp: Dictionary = {}  # BattleUnit -> float ct
+	var alive: Array[BattleUnit] = []
+	for u: BattleUnit in units:
+		if u.is_alive():
+			alive.append(u)
+			temp[u] = u.ct
+
+	var cur: BattleUnit = active_unit
+	result.append(cur)
+
+	for _i in range(n - 1):
+		if alive.is_empty():
+			break
+		temp[cur] = maxf(0.0, temp.get(cur, 0.0) - 100.0)
+
+		var min_ticks: float = 1e9
+		for u: BattleUnit in alive:
+			var ticks: float = maxf(0.0, 100.0 - temp.get(u, 0.0)) / float(u.data.speed)
+			if ticks < min_ticks:
+				min_ticks = ticks
+		for u: BattleUnit in alive:
+			temp[u] = temp.get(u, 0.0) + min_ticks * float(u.data.speed)
+
+		var nxt: BattleUnit = alive[0]
+		for u: BattleUnit in alive:
+			var uct: float = temp.get(u, 0.0)
+			var nct: float = temp.get(nxt, 0.0)
+			if uct > nct or (uct == nct and u.data.speed > nxt.data.speed):
+				nxt = u
+		cur = nxt
+		result.append(nxt)
+
+	return result
+
+# ── Movement & combat ─────────────────────────────────────────────────────────
 
 ## All empty, in-bounds tiles reachable within move_range via 4-directional steps.
 func legal_moves(unit: BattleUnit) -> Array[Vector2i]:
@@ -51,7 +152,7 @@ func legal_moves(unit: BattleUnit) -> Array[Vector2i]:
 	return result
 
 func move_unit(unit: BattleUnit, pos: Vector2i) -> bool:
-	if unit.team != current_team:
+	if unit != active_unit:
 		return false
 	if unit.has_moved:
 		return false
@@ -73,36 +174,22 @@ func legal_targets(unit: BattleUnit) -> Array[BattleUnit]:
 	return out
 
 func attack(attacker: BattleUnit, target: BattleUnit) -> bool:
-	if attacker.team != current_team:
+	if attacker != active_unit:
 		return false
 	if attacker.has_acted:
 		return false
 	if not target in legal_targets(attacker):
 		return false
-	# Compute damage, reduced by PASSIVE_TOUGH on defender
 	var dmg: int = attacker.data.atk
 	if target.data.ability != null and target.data.ability.type == _AbilityData.Type.PASSIVE_TOUGH:
 		dmg = max(0, dmg - target.data.ability.param)
 	target.take_damage(dmg)
-	# Apply PASSIVE_POISON from attacker
 	if attacker.data.ability != null and attacker.data.ability.type == _AbilityData.Type.PASSIVE_POISON:
 		target.poison_stacks = max(target.poison_stacks, attacker.data.ability.param)
 	attacker.has_acted = true
 	if not target.is_alive():
 		board.remove_unit(target)
 	return true
-
-func end_turn() -> void:
-	current_team = 1 - current_team
-	# Tick poison on the newly-active team's units before they act
-	for u in units_for_team(current_team):
-		if u.poison_stacks > 0:
-			u.take_damage(u.poison_stacks)
-			if not u.is_alive():
-				board.remove_unit(u)
-	# Reset turn flags for surviving units
-	for u in units_for_team(current_team):
-		u.reset_turn()
 
 ## Returns the winning team (0 or 1), or -1 if the match is ongoing.
 func winner() -> int:
@@ -138,23 +225,8 @@ func legal_ability_targets(unit: BattleUnit) -> Array[Vector2i]:
 				out.append(t.grid_pos)
 	return out
 
-## Returns a deep copy for AI simulation. Mutating the copy never affects self.
-func duplicate() -> MatchState:
-	var copy := MatchState.new(Board.new(board.width, board.height))
-	copy.current_team = current_team
-	for u in units:
-		var u_copy := BattleUnit.new(u.data, u.team, u.grid_pos)
-		u_copy.current_hp = u.current_hp
-		u_copy.has_moved = u.has_moved
-		u_copy.has_acted = u.has_acted
-		u_copy.poison_stacks = u.poison_stacks
-		copy.units.append(u_copy)
-		copy.board.place_unit(u_copy, u_copy.grid_pos)
-	return copy
-
-## Execute a unit's active ability targeting target_pos. Returns false if invalid.
 func use_ability(unit: BattleUnit, target_pos: Vector2i) -> bool:
-	if unit.team != current_team:
+	if unit != active_unit:
 		return false
 	if unit.data.ability == null:
 		return false
@@ -178,3 +250,26 @@ func use_ability(unit: BattleUnit, target_pos: Vector2i) -> bool:
 						board.remove_unit(splash)
 			unit.has_acted = true
 	return true
+
+## Returns a deep copy for AI simulation. Mutating the copy never affects self.
+func duplicate() -> MatchState:
+	var copy := MatchState.new(Board.new(board.width, board.height))
+	copy.current_team = current_team
+	var active_idx: int = units.find(active_unit)
+	for i in range(units.size()):
+		var u: BattleUnit = units[i]
+		var u_copy := BattleUnit.new(u.data, u.team, u.grid_pos)
+		u_copy.current_hp    = u.current_hp
+		u_copy.has_moved     = u.has_moved
+		u_copy.has_acted     = u.has_acted
+		u_copy.poison_stacks = u.poison_stacks
+		u_copy.ct            = u.ct
+		copy.units.append(u_copy)
+		copy.board.place_unit(u_copy, u_copy.grid_pos)
+	if active_idx >= 0 and active_idx < copy.units.size():
+		copy.active_unit = copy.units[active_idx]
+	return copy
+
+## Legacy no-op kept for AI simulation code that calls end_turn().
+func end_turn() -> void:
+	pass

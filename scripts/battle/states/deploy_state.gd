@@ -43,7 +43,8 @@ func _try_place(ctx: Node, g: Vector2i) -> void:
 	_update_label(ctx)
 	if _queue.is_empty():
 		ctx.clear_highlights()
-		ctx.change_state(PlayerTurnState.new())
+		ctx.match_state.initialize_initiative()
+		ctx.advance_turn()
 
 func _is_valid_tile(ctx: Node, g: Vector2i) -> bool:
 	if not ctx.match_state.board.is_in_bounds(g):
@@ -82,4 +83,5 @@ func auto_place(ctx: Node) -> void:
 		ctx.spawn_unit(data, 0, valid[placed])
 		placed += 1
 	ctx.clear_highlights()
-	ctx.change_state(PlayerTurnState.new())
+	ctx.match_state.initialize_initiative()
+	ctx.advance_turn()

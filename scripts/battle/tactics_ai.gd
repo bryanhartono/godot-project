@@ -20,8 +20,37 @@ class Action:
 		action_type   = p_type
 		action_target = p_target
 
-## Entry point.
-## difficulty: 1=Easy (greedy per-unit), 2=Normal (team coordination), 3=Hard (+opponent lookahead)
+## Entry point for the initiative-based system.
+## Returns the best Action for state.active_unit.
+func get_unit_action(state: MatchState, difficulty: int) -> Action:
+	var unit: BattleUnit = state.active_unit
+	if unit == null:
+		return Action.new(unit, Vector2i(-1,-1), Action.PASS)
+	var sim := state.duplicate()
+	var su: BattleUnit = _mirror(sim, unit)
+	if su == null:
+		return Action.new(unit, unit.grid_pos, Action.PASS)
+	sim.active_unit = su
+
+	var best_score := -INF
+	var best_opt: Array = [su.grid_pos, Action.PASS, Vector2i(-1, -1)]
+	for opt in _unit_options(sim, su):
+		var trial := sim.duplicate()
+		var tu: BattleUnit = _mirror(trial, su)
+		if tu == null:
+			continue
+		trial.active_unit = tu
+		_apply_option(trial, tu, opt)
+		var s: float = _score(trial, unit.team)
+		# Hard difficulty: also penalise options that leave self exposed
+		if difficulty >= 3:
+			s -= _score(trial, 1 - unit.team) * 0.3
+		if s > best_score:
+			best_score = s
+			best_opt   = opt
+	return Action.new(unit, best_opt[0], best_opt[1], best_opt[2])
+
+## Legacy batch entry point (kept so existing code compiles). Uses get_unit_action internally.
 func get_actions(state: MatchState, ai_team: int, difficulty: int) -> Array:
 	match difficulty:
 		1: return _easy(state, ai_team)
@@ -52,6 +81,7 @@ func _mirror(state: MatchState, original: BattleUnit) -> BattleUnit:
 
 ## Return all (move_pos, action_type, action_target) option arrays for one unit.
 func _unit_options(state: MatchState, unit: BattleUnit) -> Array:
+	state.active_unit = unit  # Allow this unit to act in simulation
 	var opts := []
 	var move_positions: Array[Vector2i] = [unit.grid_pos]
 	if not unit.has_moved:
@@ -62,6 +92,7 @@ func _unit_options(state: MatchState, unit: BattleUnit) -> Array:
 		var su := _mirror(sim, unit)
 		if su == null:
 			continue
+		sim.active_unit = su
 		if move_pos != su.grid_pos:
 			sim.move_unit(su, move_pos)
 
@@ -82,6 +113,7 @@ func _unit_options(state: MatchState, unit: BattleUnit) -> Array:
 
 ## Apply one option to `unit` in `state`.
 func _apply_option(state: MatchState, unit: BattleUnit, opt: Array) -> void:
+	state.active_unit = unit  # Allow this unit to act in simulation
 	var move_pos:      Vector2i = opt[0]
 	var action_type:   int      = opt[1]
 	var action_target: Vector2i = opt[2]

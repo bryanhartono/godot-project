@@ -2,62 +2,65 @@
 class_name AiTurnState
 extends BaseBattleState
 
-const AI_TEAM       := 1
-const ACTION_DELAY  := 0.4   # seconds between AI actions
+const AI_TEAM      := 1
+const ACTION_DELAY := 0.35
 
 var _difficulty: int
-var _actions:    Array = []
 
 func _init(difficulty: int = 2) -> void:
 	_difficulty = difficulty
 
 func enter(ctx: Node) -> void:
-	ctx.set_labels("Turn: AI", "", "")
-	var ai := TacticsAI.new()
-	_actions = ai.get_actions(ctx.match_state, AI_TEAM, _difficulty)
-	_start_processing(ctx)
+	var unit: BattleUnit = ctx.match_state.active_unit
+	var name_str: String = unit.data.display_name if unit != null else "Enemy"
+	ctx.set_labels("Enemy Turn", "", name_str)
+	_execute(ctx)
 
-func exit(ctx: Node) -> void:
+func exit(_ctx: Node) -> void:
 	pass
 
 func handle_input(_ctx: Node, _event: InputEvent) -> void:
-	pass  # Player cannot interact during AI turn
+	pass
 
-# ── Action execution via Tween ────────────────────────────────────────────────
+# ── Execution ─────────────────────────────────────────────────────────────────
 
-func _start_processing(ctx: Node) -> void:
-	if _actions.is_empty():
-		_finish_turn(ctx)
-		return
-	var tween: Tween = ctx.create_tween()
-	for i in range(_actions.size()):
-		tween.tween_callback(_apply_next_action.bind(ctx, i)).set_delay(ACTION_DELAY)
-	tween.tween_callback(_finish_turn.bind(ctx)).set_delay(ACTION_DELAY)
-
-func _apply_next_action(ctx: Node, idx: int) -> void:
-	if idx >= _actions.size():
-		return
-	var action: TacticsAI.Action = _actions[idx]
+func _execute(ctx: Node) -> void:
 	var ms: MatchState = ctx.match_state
-	var real_unit := ms.board.get_unit_at(action.unit.grid_pos)
-	if real_unit == null or real_unit.team != AI_TEAM:
+	var unit: BattleUnit = ms.active_unit
+	if unit == null or unit.team != AI_TEAM:
+		ctx.advance_turn()
 		return
-	if action.move_to != Vector2i(-1, -1) and action.move_to != real_unit.grid_pos:
-		ms.move_unit(real_unit, action.move_to)
+
+	var ai     := TacticsAI.new()
+	var action: TacticsAI.Action = ai.get_unit_action(ms, _difficulty)
+
+	var tween: Tween = ctx.create_tween()
+	tween.tween_callback(_apply_action.bind(ctx, action)).set_delay(ACTION_DELAY)
+	tween.tween_callback(_finish.bind(ctx)).set_delay(ACTION_DELAY)
+
+func _apply_action(ctx: Node, action: TacticsAI.Action) -> void:
+	var ms: MatchState   = ctx.match_state
+	var unit: BattleUnit = ms.active_unit
+	if unit == null or unit.team != AI_TEAM:
+		return
+
+	if action.move_to != Vector2i(-1, -1) and action.move_to != unit.grid_pos:
+		ms.move_unit(unit, action.move_to)
+
 	match action.action_type:
 		TacticsAI.Action.ATTACK:
 			var target := ms.board.get_unit_at(action.action_target)
 			if target:
-				ms.attack(real_unit, target)
-				ctx.play_attack_animation(real_unit)
+				ms.attack(unit, target)
+				ctx.play_attack_animation(unit, target)
 		TacticsAI.Action.ABILITY:
-			ms.use_ability(real_unit, action.action_target)
+			ms.use_ability(unit, action.action_target)
+
 	ctx.sync_sprites()
 
-func _finish_turn(ctx: Node) -> void:
+func _finish(ctx: Node) -> void:
 	if ctx.match_state.winner() != -1:
 		ctx.change_state(WinLoseState.new())
 		return
-	ctx.match_state.end_turn()
 	ctx.sync_sprites()
-	ctx.change_state(PlayerTurnState.new())
+	ctx.advance_turn()
