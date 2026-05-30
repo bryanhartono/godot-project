@@ -166,7 +166,7 @@ func hide_win_lose_overlay() -> void:
 		_overlay = null
 
 func _show_loot_overlay(won: bool) -> void:
-	var result := PlayerProfile.roll_loot(won)
+	var result: Dictionary = PlayerProfile.roll_loot(won)
 
 	var layer := CanvasLayer.new()
 	_loot_overlay = layer

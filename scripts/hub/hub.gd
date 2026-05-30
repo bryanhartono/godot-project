@@ -44,7 +44,7 @@ func _build_ui() -> void:
 func _refresh() -> void:
 	_gems_label.text   = "Gems: %d" % PlayerProfile.gems
 	_play_btn.disabled = PlayerProfile.squad.is_empty()
-	var status := PlayerProfile.daily_status()
+	var status: Dictionary = PlayerProfile.daily_status()
 	_daily_btn.text = "Daily Reward — READY" if not status["claimed"] else "Daily Reward"
 
 func _on_daily_pressed() -> void:
@@ -85,10 +85,10 @@ func _show_calendar_popup() -> void:
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.add_child(hbox)
 
-	var status      := PlayerProfile.daily_status()
-	var current_day: int  = status["day"]
-	var claimed:     bool = status["claimed"]
-	var missed:      Array = status["missed"]
+	var status:      Dictionary = PlayerProfile.daily_status()
+	var current_day: int       = status["day"]
+	var claimed:     bool      = status["claimed"]
+	var missed:      Array     = status["missed"]
 
 	for i in 7:
 		var day_num := i + 1
@@ -100,7 +100,7 @@ func _show_calendar_popup() -> void:
 		day_lbl.text = "Day %d" % day_num
 		slot.add_child(day_lbl)
 
-		var reward := PlayerProfile.DAILY_REWARDS[i]
+		var reward: Dictionary = PlayerProfile.DAILY_REWARDS[i]
 		var reward_lbl := Label.new()
 		var has_mon: bool = reward.get("monster", false)
 		var g: int = reward.get("gems", 0)
