@@ -116,7 +116,7 @@ func sync_sprites() -> void:
 				spr.play(_idle_anims.get(u, &"idle_front"))
 			if _hp_bars.has(u):
 				var bar_pos := screen_pos - Vector2(0, BAR_LIFT)
-				var z       := u.grid_pos.x + u.grid_pos.y + 1
+				var z: int = u.grid_pos.x + u.grid_pos.y + 1
 				_hp_bars[u]["bg"].position   = bar_pos
 				_hp_bars[u]["fill"].position = bar_pos
 				_hp_bars[u]["bg"].z_index    = z
@@ -174,8 +174,8 @@ func _update_hp_bar(unit: BattleUnit) -> void:
 		fill.color = Color(0.90, 0.15, 0.15)
 
 func highlight_tiles(move_targets: Array[Vector2i],
-                     atk_targets:  Array[BattleUnit],
-                     ability_targets: Array[Vector2i]) -> void:
+					 atk_targets:  Array[BattleUnit],
+					 ability_targets: Array[Vector2i]) -> void:
 	for g in _tiles:
 		_tiles[g].color = _base_color(g)
 	for g in move_targets:
@@ -323,7 +323,7 @@ func screen_to_grid(s: Vector2) -> Vector2i:
 	var hw := TILE_W * 0.5
 	var hh := TILE_H * 0.5
 	return Vector2i(roundi((s.x / hw + s.y / hh) * 0.5),
-	                roundi((s.y / hh - s.x / hw) * 0.5))
+					roundi((s.y / hh - s.x / hw) * 0.5))
 
 # ── Board construction ────────────────────────────────────────────────────────
 
