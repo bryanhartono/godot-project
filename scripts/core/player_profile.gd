@@ -130,8 +130,8 @@ func daily_status() -> Dictionary:
 func claim_daily() -> Dictionary:
 	if last_claim_date == _today_string():
 		return {}
-	var reward := DAILY_REWARDS[calendar_day - 1]
-	var result := _apply_daily_reward(reward)
+	var reward: Dictionary = DAILY_REWARDS[calendar_day - 1]
+	var result: Dictionary = _apply_daily_reward(reward)
 	last_claim_date = _today_string()
 	calendar_day    = (calendar_day % 7) + 1
 	if save_enabled:
@@ -145,7 +145,7 @@ func buy_missed_day(day: int) -> bool:
 	if gems < MISSED_DAY_COST:
 		return false
 	gems -= MISSED_DAY_COST
-	var reward := DAILY_REWARDS[day - 1]
+	var reward: Dictionary = DAILY_REWARDS[day - 1]
 	_apply_daily_reward(reward)
 	missed_days.erase(day)
 	if save_enabled:
@@ -227,7 +227,7 @@ func _save() -> void:
 func _load() -> void:
 	var f    := FileAccess.open(SAVE_PATH, FileAccess.READ)
 	var text := f.get_as_text()
-	var d    := JSON.parse_string(text)
+	var d: Variant = JSON.parse_string(text)
 	if not d is Dictionary:
 		_init_fresh()
 		return
