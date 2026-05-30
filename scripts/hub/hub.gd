@@ -71,7 +71,7 @@ func _show_calendar_popup() -> void:
 		var day_num := i + 1
 		var slot := VBoxContainer.new()
 		slot.alignment = BoxContainer.ALIGNMENT_CENTER
-		slot.custom_minimum_size = Vector2(60, 0)
+		slot.custom_minimum_size = Vector2(50, 0)
 		hbox.add_child(slot)
 
 		var day_lbl := Label.new()
