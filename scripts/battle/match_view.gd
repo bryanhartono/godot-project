@@ -11,6 +11,9 @@ const BOARD_W     := 7
 const BOARD_H     := 7
 const UNIT_SCALE  := 3.0
 const SPRITE_LIFT := 8.0
+const BAR_W       := 18.0
+const BAR_H       := 2.5
+const BAR_LIFT    := SPRITE_LIFT + 28.0   # above sprite top
 
 
 const COLOR_LIGHT   := Color(0.30, 0.42, 0.30)
@@ -27,6 +30,7 @@ var config:      MatchConfig
 var _tiles:      Dictionary = {}   # Vector2i -> Polygon2D
 var _sprites:    Dictionary = {}   # BattleUnit -> AnimatedSprite2D
 var _idle_anims: Dictionary = {}   # BattleUnit -> StringName
+var _hp_bars:    Dictionary = {}   # BattleUnit -> {bg: Polygon2D, fill: Polygon2D}
 
 ## State machine.
 var _current_state: BaseBattleState = null
@@ -87,9 +91,11 @@ func spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	_idle_anims[unit] = idle
 	spr.play(idle)
 	if team == 1:
+		spr.flip_h   = true
 		spr.modulate = Color(1.0, 0.65, 0.65)
 	add_child(spr)
 	_sprites[unit] = spr
+	_create_hp_bar(unit, pos)
 
 func sync_sprites() -> void:
 	for u in _sprites.keys():
@@ -98,11 +104,24 @@ func sync_sprites() -> void:
 			spr.queue_free()
 			_sprites.erase(u)
 			_idle_anims.erase(u)
+			if _hp_bars.has(u):
+				_hp_bars[u]["bg"].queue_free()
+				_hp_bars[u]["fill"].queue_free()
+				_hp_bars.erase(u)
 		else:
-			spr.position = grid_to_screen(u.grid_pos) - Vector2(0, SPRITE_LIFT)
+			var screen_pos := grid_to_screen(u.grid_pos)
+			spr.position = screen_pos - Vector2(0, SPRITE_LIFT)
 			spr.z_index  = u.grid_pos.x + u.grid_pos.y
 			if not spr.is_playing():
 				spr.play(_idle_anims.get(u, &"idle_front"))
+			if _hp_bars.has(u):
+				var bar_pos := screen_pos - Vector2(0, BAR_LIFT)
+				var z       := u.grid_pos.x + u.grid_pos.y + 1
+				_hp_bars[u]["bg"].position   = bar_pos
+				_hp_bars[u]["fill"].position = bar_pos
+				_hp_bars[u]["bg"].z_index    = z
+				_hp_bars[u]["fill"].z_index  = z
+				_update_hp_bar(u)
 
 func play_attack_animation(unit: BattleUnit) -> void:
 	var spr: AnimatedSprite2D = _sprites.get(unit)
@@ -115,6 +134,44 @@ func play_attack_animation(unit: BattleUnit) -> void:
 		if _sprites.has(unit) and is_instance_valid(_sprites[unit]):
 			_sprites[unit].play(idle_anim)
 	)
+
+func _create_hp_bar(unit: BattleUnit, pos: Vector2i) -> void:
+	var bar_pos := grid_to_screen(pos) - Vector2(0, BAR_LIFT)
+	var z       := pos.x + pos.y + 1
+	var hw      := BAR_W * 0.5
+	var hh      := BAR_H * 0.5
+	var bg_rect := PackedVector2Array([
+		Vector2(-hw, -hh), Vector2(hw, -hh), Vector2(hw, hh), Vector2(-hw, hh)
+	])
+	var bg := Polygon2D.new()
+	bg.polygon  = bg_rect
+	bg.color    = Color(0.12, 0.12, 0.12, 0.85)
+	bg.position = bar_pos
+	bg.z_index  = z
+	add_child(bg)
+	var fill := Polygon2D.new()
+	fill.position = bar_pos
+	fill.z_index  = z
+	add_child(fill)
+	_hp_bars[unit] = {"bg": bg, "fill": fill}
+	_update_hp_bar(unit)
+
+func _update_hp_bar(unit: BattleUnit) -> void:
+	var fill: Polygon2D = _hp_bars[unit]["fill"]
+	var ratio := clampf(float(unit.current_hp) / float(unit.data.max_hp), 0.0, 1.0)
+	var fw    := BAR_W * ratio
+	var hh    := BAR_H * 0.5
+	var left  := -BAR_W * 0.5
+	fill.polygon = PackedVector2Array([
+		Vector2(left, -hh), Vector2(left + fw, -hh),
+		Vector2(left + fw,  hh), Vector2(left,  hh)
+	])
+	if ratio > 0.6:
+		fill.color = Color(0.20, 0.85, 0.20)
+	elif ratio > 0.3:
+		fill.color = Color(0.90, 0.75, 0.10)
+	else:
+		fill.color = Color(0.90, 0.15, 0.15)
 
 func highlight_tiles(move_targets: Array[Vector2i],
                      atk_targets:  Array[BattleUnit],
