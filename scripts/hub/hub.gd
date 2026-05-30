@@ -1,48 +1,16 @@
 # scripts/hub/hub.gd
 extends Node
 
-var _gems_label: Label
-var _play_btn:   Button
-var _daily_btn:  Button
+@onready var _gems_label: Label  = $CanvasLayer/CenterContainer/VBoxContainer/GemsLabel
+@onready var _daily_btn:  Button = $CanvasLayer/CenterContainer/VBoxContainer/DailyBtn
+@onready var _play_btn:   Button = $CanvasLayer/CenterContainer/VBoxContainer/PlayBtn
 
 func _ready() -> void:
 	PlayerProfile.tick_calendar()
-	_build_ui()
+	$CanvasLayer/CenterContainer/VBoxContainer/DailyBtn.pressed.connect(_on_daily_pressed)
+	$CanvasLayer/CenterContainer/VBoxContainer/SquadBtn.pressed.connect(_on_squad_pressed)
+	$CanvasLayer/CenterContainer/VBoxContainer/PlayBtn.pressed.connect(_on_play_pressed)
 	_refresh()
-
-func _build_ui() -> void:
-	var layer := CanvasLayer.new()
-	add_child(layer)
-
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.add_child(center)
-
-	var vbox := VBoxContainer.new()
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	center.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "Monster Tactics"
-	title.add_theme_font_size_override("font_size", 32)
-	vbox.add_child(title)
-
-	_gems_label = Label.new()
-	vbox.add_child(_gems_label)
-
-	_daily_btn = Button.new()
-	_daily_btn.pressed.connect(_on_daily_pressed)
-	vbox.add_child(_daily_btn)
-
-	var squad_btn := Button.new()
-	squad_btn.text = "My Squad"
-	squad_btn.pressed.connect(_on_squad_pressed)
-	vbox.add_child(squad_btn)
-
-	_play_btn = Button.new()
-	_play_btn.text = "Play"
-	_play_btn.pressed.connect(_on_play_pressed)
-	vbox.add_child(_play_btn)
 
 func _refresh() -> void:
 	_gems_label.text   = "Gems: %d" % PlayerProfile.gems
@@ -80,30 +48,35 @@ func _show_calendar_popup() -> void:
 
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.theme_override_constants["separation"] = 10
 	center.add_child(vbox)
 
 	var title := Label.new()
 	title.text = "Daily Reward"
 	title.add_theme_font_size_override("font_size", 28)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
 	var hbox := HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.theme_override_constants["separation"] = 8
 	vbox.add_child(hbox)
 
 	var status:      Dictionary = PlayerProfile.daily_status()
-	var current_day: int       = status["day"]
-	var claimed:     bool      = status["claimed"]
-	var missed:      Array     = status["missed"]
+	var current_day: int        = status["day"]
+	var claimed:     bool       = status["claimed"]
+	var missed:      Array      = status["missed"]
 
 	for i in 7:
 		var day_num := i + 1
 		var slot := VBoxContainer.new()
 		slot.alignment = BoxContainer.ALIGNMENT_CENTER
+		slot.custom_minimum_size = Vector2(60, 0)
 		hbox.add_child(slot)
 
 		var day_lbl := Label.new()
 		day_lbl.text = "Day %d" % day_num
+		day_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		slot.add_child(day_lbl)
 
 		var reward: Dictionary = PlayerProfile.DAILY_REWARDS[i]
@@ -115,12 +88,13 @@ func _show_calendar_popup() -> void:
 		elif has_mon:
 			reward_lbl.text = "Monster"
 		else:
-			reward_lbl.text = "%d gems" % g
+			reward_lbl.text = "%dg" % g
+		reward_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		slot.add_child(reward_lbl)
 
 		if day_num in missed:
 			var buy_btn := Button.new()
-			buy_btn.text     = "20 gems"
+			buy_btn.text     = "20g"
 			buy_btn.disabled = PlayerProfile.gems < PlayerProfile.MISSED_DAY_COST
 			buy_btn.pressed.connect(func():
 				if PlayerProfile.buy_missed_day(day_num):
@@ -141,10 +115,12 @@ func _show_calendar_popup() -> void:
 		elif day_num < current_day or (day_num == current_day and claimed):
 			var done_lbl := Label.new()
 			done_lbl.text = "Done"
+			done_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			slot.add_child(done_lbl)
 		else:
 			var lock_lbl := Label.new()
 			lock_lbl.text = "Locked"
+			lock_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			slot.add_child(lock_lbl)
 
 	var close_btn := Button.new()

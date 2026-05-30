@@ -4,60 +4,27 @@ extends Node
 const BUDGET := 10
 
 var _working_squad: Array[MonsterData] = []
-var _budget_label:  Label
-var _squad_strip:   HBoxContainer
-var _card_btns:     Dictionary = {}   # MonsterData -> Button
+
+@onready var _budget_label: Label         = $CanvasLayer/VBoxContainer/TopBar/BudgetLabel
+@onready var _card_grid:    GridContainer = $CanvasLayer/VBoxContainer/Scroll/CardGrid
+@onready var _squad_strip:  HBoxContainer = $CanvasLayer/VBoxContainer/SquadStrip
+
+var _card_btns: Dictionary = {}   # MonsterData -> Button
 
 func _ready() -> void:
 	_working_squad = PlayerProfile.squad.duplicate()
-	_build_ui()
+	$CanvasLayer/VBoxContainer/TopBar/BackBtn.pressed.connect(_on_back_pressed)
+	_populate_cards()
 	_refresh()
 
-func _build_ui() -> void:
-	var layer := CanvasLayer.new()
-	add_child(layer)
-
-	var root_vbox := VBoxContainer.new()
-	root_vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.add_child(root_vbox)
-
-	# Top bar
-	var top_bar := HBoxContainer.new()
-	root_vbox.add_child(top_bar)
-
-	_budget_label = Label.new()
-	_budget_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top_bar.add_child(_budget_label)
-
-	var back_btn := Button.new()
-	back_btn.text = "Back"
-	back_btn.pressed.connect(_on_back_pressed)
-	top_bar.add_child(back_btn)
-
-	# Collection grid
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root_vbox.add_child(scroll)
-
-	var grid := GridContainer.new()
-	grid.columns = 3
-	scroll.add_child(grid)
-
+func _populate_cards() -> void:
 	for om: OwnedMonster in PlayerProfile.owned:
 		var btn := Button.new()
-		btn.text               = "%s\nCost: %d" % [om.data.display_name, om.data.cost]
+		btn.text                = "%s\nCost: %d" % [om.data.display_name, om.data.cost]
 		btn.custom_minimum_size = Vector2(120, 60)
 		btn.pressed.connect(_on_card_pressed.bind(om.data))
-		grid.add_child(btn)
+		_card_grid.add_child(btn)
 		_card_btns[om.data] = btn
-
-	# Squad strip
-	var strip_label := Label.new()
-	strip_label.text = "Current Squad:"
-	root_vbox.add_child(strip_label)
-
-	_squad_strip = HBoxContainer.new()
-	root_vbox.add_child(_squad_strip)
 
 func _on_card_pressed(data: MonsterData) -> void:
 	if data in _working_squad:

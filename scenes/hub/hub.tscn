@@ -1,6 +1,41 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://bg0ej4xm5q68a"]
 
-[ext_resource type="Script" path="res://scripts/hub/hub.gd" id="1_hub"]
+[ext_resource type="Script" uid="uid://dbclhcq1f2pkr" path="res://scripts/hub/hub.gd" id="1_hub"]
 
-[node name="Hub" type="Node"]
+[node name="Hub" type="Node" unique_id=1722723910]
 script = ExtResource("1_hub")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1008788561]
+
+[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer" unique_id=1491525450]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/CenterContainer" unique_id=1073494703]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/CenterContainer/VBoxContainer" unique_id=1860283716]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Monster Tactics"
+horizontal_alignment = 1
+
+[node name="GemsLabel" type="Label" parent="CanvasLayer/CenterContainer/VBoxContainer" unique_id=2145054340]
+layout_mode = 2
+text = "Gems: 100"
+horizontal_alignment = 1
+
+[node name="DailyBtn" type="Button" parent="CanvasLayer/CenterContainer/VBoxContainer" unique_id=1044925176]
+layout_mode = 2
+text = "Daily Reward"
+
+[node name="SquadBtn" type="Button" parent="CanvasLayer/CenterContainer/VBoxContainer" unique_id=36350404]
+layout_mode = 2
+text = "My Squad"
+
+[node name="PlayBtn" type="Button" parent="CanvasLayer/CenterContainer/VBoxContainer" unique_id=899449508]
+layout_mode = 2
+text = "Play"
