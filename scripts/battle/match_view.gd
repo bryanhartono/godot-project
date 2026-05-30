@@ -341,6 +341,7 @@ func _build_background() -> void:
 	add_child(layer)
 	var bg := ColorRect.new()
 	bg.color = Color(0.10, 0.06, 0.02)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(bg)
 
