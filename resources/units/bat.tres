@@ -1,37 +1,37 @@
 [gd_resource type="SpriteFrames" format=3 uid="uid://dmk6b3ewbf7kv"]
 
-[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_bat"]
+[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_mbt05"]
 
 [sub_resource type="AtlasTexture" id="ab0_bat"]
-atlas = ExtResource("1_bat")
+atlas = ExtResource("1_mbt05")
 region = Rect2(32, 464, 16, 16)
 
 [sub_resource type="AtlasTexture" id="ab1_bat"]
-atlas = ExtResource("1_bat")
+atlas = ExtResource("1_mbt05")
 region = Rect2(48, 464, 16, 16)
 
 [sub_resource type="AtlasTexture" id="af0_bat"]
-atlas = ExtResource("1_bat")
+atlas = ExtResource("1_mbt05")
 region = Rect2(32, 448, 16, 16)
 
 [sub_resource type="AtlasTexture" id="af1_bat"]
-atlas = ExtResource("1_bat")
+atlas = ExtResource("1_mbt05")
 region = Rect2(48, 448, 16, 16)
 
 [sub_resource type="AtlasTexture" id="ib0_bat"]
-atlas = ExtResource("1_bat")
+atlas = ExtResource("1_mbt05")
 region = Rect2(0, 464, 16, 16)
 
 [sub_resource type="AtlasTexture" id="ib1_bat"]
-atlas = ExtResource("1_bat")
+atlas = ExtResource("1_mbt05")
 region = Rect2(16, 464, 16, 16)
 
 [sub_resource type="AtlasTexture" id="if0_bat"]
-atlas = ExtResource("1_bat")
+atlas = ExtResource("1_mbt05")
 region = Rect2(0, 448, 16, 16)
 
 [sub_resource type="AtlasTexture" id="if1_bat"]
-atlas = ExtResource("1_bat")
+atlas = ExtResource("1_mbt05")
 region = Rect2(16, 448, 16, 16)
 
 [resource]

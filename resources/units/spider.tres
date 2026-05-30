@@ -1,37 +1,37 @@
 [gd_resource type="SpriteFrames" format=3 uid="uid://bv6cwokuj2gpn"]
 
-[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_spider"]
+[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_flual"]
 
 [sub_resource type="AtlasTexture" id="ab0_crab"]
-atlas = ExtResource("1_spider")
+atlas = ExtResource("1_flual")
 region = Rect2(32, 400, 16, 16)
 
 [sub_resource type="AtlasTexture" id="ab1_crab"]
-atlas = ExtResource("1_spider")
+atlas = ExtResource("1_flual")
 region = Rect2(48, 400, 16, 16)
 
 [sub_resource type="AtlasTexture" id="af0_crab"]
-atlas = ExtResource("1_spider")
+atlas = ExtResource("1_flual")
 region = Rect2(32, 384, 16, 16)
 
 [sub_resource type="AtlasTexture" id="af1_crab"]
-atlas = ExtResource("1_spider")
+atlas = ExtResource("1_flual")
 region = Rect2(48, 384, 16, 16)
 
 [sub_resource type="AtlasTexture" id="ib0_crab"]
-atlas = ExtResource("1_spider")
+atlas = ExtResource("1_flual")
 region = Rect2(0, 400, 16, 16)
 
 [sub_resource type="AtlasTexture" id="ib1_crab"]
-atlas = ExtResource("1_spider")
+atlas = ExtResource("1_flual")
 region = Rect2(16, 400, 16, 16)
 
 [sub_resource type="AtlasTexture" id="if0_crab"]
-atlas = ExtResource("1_spider")
+atlas = ExtResource("1_flual")
 region = Rect2(0, 384, 16, 16)
 
 [sub_resource type="AtlasTexture" id="if1_crab"]
-atlas = ExtResource("1_spider")
+atlas = ExtResource("1_flual")
 region = Rect2(16, 384, 16, 16)
 
 [resource]

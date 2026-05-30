@@ -32,16 +32,16 @@ func _on_squad_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/hub/squad_builder.tscn")
 
 func _on_play_pressed() -> void:
-	var cfg          := MatchConfig.new()
-	cfg.player_squad  = PlayerProfile.squad.duplicate()
+	var cfg       := MatchConfig.new()
+	cfg.player_squad.assign(PlayerProfile.squad)
 	cfg.enemy_squad   = SquadPicker.random_squad(PlayerProfile.BUDGET)
 	cfg.difficulty    = 2
 	Engine.set_meta("match_config", cfg)
 	get_tree().change_scene_to_file("res://scenes/battle/match_view.tscn")
 
 func _on_ranked_pressed() -> void:
-	var cfg          := MatchConfig.new()
-	cfg.player_squad  = PlayerProfile.squad.duplicate()
+	var cfg       := MatchConfig.new()
+	cfg.player_squad.assign(PlayerProfile.squad)
 	cfg.enemy_squad   = RankedPool.pick_opponent(PlayerProfile.trophies)
 	cfg.difficulty    = 2
 	cfg.is_ranked     = true

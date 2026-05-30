@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://2aryuuv68270"]
+
+[ext_resource type="Script" path="res://scripts/battle/skirmish_setup.gd" id="1_setup"]
+
+[node name="SkirmishSetup" type="Node" unique_id=599909581]
+script = ExtResource("1_setup")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1273555670]
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer" unique_id=2082039544]
+offset_left = 40.0
+offset_top = 80.0
+offset_right = 500.0
+offset_bottom = 900.0
+
+[node name="Title" type="Label" parent="CanvasLayer/VBox" unique_id=1297373906]
+layout_mode = 2
+text = "Skirmish"
+
+[node name="SquadLabel" type="Label" parent="CanvasLayer/VBox" unique_id=1477881638]
+layout_mode = 2
+text = "Your squad: ..."
+
+[node name="RerollBtn" type="Button" parent="CanvasLayer/VBox" unique_id=388255883]
+layout_mode = 2
+text = "Reroll Squad"
+
+[node name="DiffLabel" type="Label" parent="CanvasLayer/VBox" unique_id=397862750]
+layout_mode = 2
+text = "Difficulty: Normal"
+
+[node name="EasyBtn" type="Button" parent="CanvasLayer/VBox" unique_id=983322039]
+layout_mode = 2
+text = "Easy"
+
+[node name="NormalBtn" type="Button" parent="CanvasLayer/VBox" unique_id=1187934756]
+layout_mode = 2
+text = "Normal"
+
+[node name="HardBtn" type="Button" parent="CanvasLayer/VBox" unique_id=2051871751]
+layout_mode = 2
+text = "Hard"
+
+[node name="StartBtn" type="Button" parent="CanvasLayer/VBox" unique_id=254085155]
+layout_mode = 2
+text = "Start Match"

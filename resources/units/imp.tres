@@ -1,37 +1,37 @@
 [gd_resource type="SpriteFrames" format=3 uid="uid://cpfbfrettgcdg"]
 
-[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_imp"]
+[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_tag26"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_5sxld"]
-atlas = ExtResource("1_imp")
+atlas = ExtResource("1_tag26")
 region = Rect2(32, 336, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_qnbmq"]
-atlas = ExtResource("1_imp")
+atlas = ExtResource("1_tag26")
 region = Rect2(48, 336, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_mhy7y"]
-atlas = ExtResource("1_imp")
+atlas = ExtResource("1_tag26")
 region = Rect2(32, 320, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_l0vmd"]
-atlas = ExtResource("1_imp")
+atlas = ExtResource("1_tag26")
 region = Rect2(48, 320, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_i7wl1"]
-atlas = ExtResource("1_imp")
+atlas = ExtResource("1_tag26")
 region = Rect2(0, 336, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_t5hsx"]
-atlas = ExtResource("1_imp")
+atlas = ExtResource("1_tag26")
 region = Rect2(16, 336, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_cvw5o"]
-atlas = ExtResource("1_imp")
+atlas = ExtResource("1_tag26")
 region = Rect2(0, 320, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_iocax"]
-atlas = ExtResource("1_imp")
+atlas = ExtResource("1_tag26")
 region = Rect2(16, 320, 16, 16)
 
 [resource]

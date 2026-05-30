@@ -1,0 +1,82 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://do2yeqey651j4"]
+
+[ext_resource type="Texture2D" uid="uid://bp18po2t1edvf" path="res://assets/Sprites/Outlined_Entities.png" id="1_7rrc1"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8ijmm"]
+atlas = ExtResource("1_7rrc1")
+region = Rect2(32, 432, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bw373"]
+atlas = ExtResource("1_7rrc1")
+region = Rect2(48, 432, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xhuah"]
+atlas = ExtResource("1_7rrc1")
+region = Rect2(32, 416, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eam8t"]
+atlas = ExtResource("1_7rrc1")
+region = Rect2(48, 416, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b5r1p"]
+atlas = ExtResource("1_7rrc1")
+region = Rect2(0, 432, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3lid5"]
+atlas = ExtResource("1_7rrc1")
+region = Rect2(16, 432, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n1e5k"]
+atlas = ExtResource("1_7rrc1")
+region = Rect2(0, 416, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8bm1l"]
+atlas = ExtResource("1_7rrc1")
+region = Rect2(16, 416, 16, 16)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8ijmm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bw373")
+}],
+"loop": true,
+"name": &"attack_back",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xhuah")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_eam8t")
+}],
+"loop": true,
+"name": &"attack_front",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b5r1p")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3lid5")
+}],
+"loop": true,
+"name": &"idle_back",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_n1e5k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8bm1l")
+}],
+"loop": true,
+"name": &"idle_front",
+"speed": 5.0
+}]
