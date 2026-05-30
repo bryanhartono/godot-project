@@ -42,7 +42,7 @@ func _btn_box(color: Color) -> StyleBoxFlat:
 	box.content_margin_right  = 14.0
 	box.content_margin_top    = 8.0
 	box.content_margin_bottom = 8.0
-	box.anti_aliased          = true
+	box.anti_aliasing         = true
 	return box
 
 func _focus_box() -> StyleBoxFlat:
