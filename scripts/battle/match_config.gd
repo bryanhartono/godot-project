@@ -8,3 +8,4 @@ extends Resource
 var player_squad: Array[MonsterData] = []
 var enemy_squad:  Array[MonsterData] = []
 var difficulty:   int = 2  # 1=Easy  2=Normal  3=Hard
+var is_ranked:    bool = false

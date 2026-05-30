@@ -78,7 +78,7 @@ func spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	var unit := BattleUnit.new(data, team, pos)
 	match_state.add_unit(unit, pos)
 	var spr := AnimatedSprite2D.new()
-	spr.sprite_frames = load("res://resources/monsters/%s.tres" % data.sprite_stem())
+	spr.sprite_frames = load("res://resources/units/%s.tres" % data.sprite_stem())
 	spr.scale    = Vector2(UNIT_SCALE, UNIT_SCALE)
 	spr.position = grid_to_screen(pos) - Vector2(0, SPRITE_LIFT)
 	spr.z_index  = pos.x + pos.y
@@ -161,6 +161,8 @@ func show_win_lose_overlay(winner: int) -> void:
 	vbox.add_child(_menu_btn)
 
 	add_child(layer)
+	if config.is_ranked:
+		PlayerProfile.update_trophies(winner == 0)
 	_show_loot_overlay(winner == 0)
 
 func hide_win_lose_overlay() -> void:

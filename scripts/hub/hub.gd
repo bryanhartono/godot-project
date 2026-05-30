@@ -1,20 +1,26 @@
 # scripts/hub/hub.gd
 extends Node
 
-@onready var _gems_label: Label  = $CanvasLayer/CenterContainer/VBoxContainer/GemsLabel
-@onready var _daily_btn:  Button = $CanvasLayer/CenterContainer/VBoxContainer/DailyBtn
-@onready var _play_btn:   Button = $CanvasLayer/CenterContainer/VBoxContainer/PlayBtn
+@onready var _gems_label:    Label  = $CanvasLayer/CenterContainer/VBoxContainer/GemsLabel
+@onready var _trophies_label: Label = $CanvasLayer/CenterContainer/VBoxContainer/TrophiesLabel
+@onready var _daily_btn:     Button = $CanvasLayer/CenterContainer/VBoxContainer/DailyBtn
+@onready var _play_btn:      Button = $CanvasLayer/CenterContainer/VBoxContainer/PlayBtn
+@onready var _ranked_btn:    Button = $CanvasLayer/CenterContainer/VBoxContainer/RankedBtn
 
 func _ready() -> void:
 	PlayerProfile.tick_calendar()
 	$CanvasLayer/CenterContainer/VBoxContainer/DailyBtn.pressed.connect(_on_daily_pressed)
 	$CanvasLayer/CenterContainer/VBoxContainer/SquadBtn.pressed.connect(_on_squad_pressed)
 	$CanvasLayer/CenterContainer/VBoxContainer/PlayBtn.pressed.connect(_on_play_pressed)
+	$CanvasLayer/CenterContainer/VBoxContainer/RankedBtn.pressed.connect(_on_ranked_pressed)
 	_refresh()
 
 func _refresh() -> void:
-	_gems_label.text   = "Gems: %d" % PlayerProfile.gems
-	_play_btn.disabled = PlayerProfile.squad.is_empty()
+	_gems_label.text    = "Gems: %d" % PlayerProfile.gems
+	_trophies_label.text = "Trophies: %d" % PlayerProfile.trophies
+	var squad_empty := PlayerProfile.squad.is_empty()
+	_play_btn.disabled   = squad_empty
+	_ranked_btn.disabled = squad_empty
 	var status: Dictionary = PlayerProfile.daily_status()
 	_daily_btn.text = "Daily Reward — READY" if not status["claimed"] else "Daily Reward"
 
@@ -26,10 +32,19 @@ func _on_squad_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/hub/squad_builder.tscn")
 
 func _on_play_pressed() -> void:
-	var cfg            := MatchConfig.new()
-	cfg.player_squad   = PlayerProfile.squad.duplicate()
-	cfg.enemy_squad    = SquadPicker.random_squad(PlayerProfile.BUDGET)
-	cfg.difficulty     = 2
+	var cfg          := MatchConfig.new()
+	cfg.player_squad  = PlayerProfile.squad.duplicate()
+	cfg.enemy_squad   = SquadPicker.random_squad(PlayerProfile.BUDGET)
+	cfg.difficulty    = 2
+	Engine.set_meta("match_config", cfg)
+	get_tree().change_scene_to_file("res://scenes/battle/match_view.tscn")
+
+func _on_ranked_pressed() -> void:
+	var cfg          := MatchConfig.new()
+	cfg.player_squad  = PlayerProfile.squad.duplicate()
+	cfg.enemy_squad   = RankedPool.pick_opponent(PlayerProfile.trophies)
+	cfg.difficulty    = 2
+	cfg.is_ranked     = true
 	Engine.set_meta("match_config", cfg)
 	get_tree().change_scene_to_file("res://scenes/battle/match_view.tscn")
 

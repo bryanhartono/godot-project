@@ -12,10 +12,10 @@ extends Resource
 @export var atk_range: int = 1
 @export var ability: AbilityData = null
 @export var sprite_row: int = 0
-## Filename stem under res://resources/monsters/. Defaults to id if empty.
+## Filename stem under res://resources/units/. Defaults to id if empty.
 @export var sprite_file: StringName = &""
 
-## Returns the stem used to load res://resources/monsters/<stem>.tres
+## Returns the stem used to load res://resources/units/<stem>.tres
 func sprite_stem() -> StringName:
 	return sprite_file if sprite_file != &"" else id
 

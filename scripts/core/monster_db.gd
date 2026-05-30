@@ -36,5 +36,14 @@ func _register_all() -> void:
 	_register(MonsterData.create(&"imp",     "Imp",     3,  5, 3, 2, 1, AbilityData.active_aoe_strike(1),  21))
 	# ── Tank ──────────────────────────────────────────────────────────
 	_register(MonsterData.create(&"crab",    "Crab",    3, 10, 1, 2, 1, AbilityData.passive_tough(1),      24, &"spider"))
+	_register(MonsterData.create(&"slime",   "Slime",   2,  8, 1, 1, 1, AbilityData.passive_tough(1),      22, &"slime"))
 	# ── Support (high range; no passive) ─────────────────────────────
 	_register(MonsterData.create(&"ghost",   "Ghost",   2,  5, 1, 3, 2, null,                              30))
+	# ── Undead ────────────────────────────────────────────────────────
+	_register(MonsterData.create(&"undead_soldier",  "Undead Soldier",  2,  7, 2, 2, 1, AbilityData.passive_tough(1), 16, &"undead_soldier"))
+	_register(MonsterData.create(&"skeleton_archer", "Skeleton Archer", 2,  3, 3, 1, 3, null,                         22, &"skeleton_archer"))
+	# ── Goblin variants ───────────────────────────────────────────────
+	_register(MonsterData.create(&"goblin_grunt",   "Goblin Grunt",   1,  4, 2, 3, 1, null,                           8, &"goblin"))
+	_register(MonsterData.create(&"goblin_slinger", "Goblin Slinger", 2,  3, 2, 2, 3, null,                          16, &"goblin_slingshot"))
+	# ── Human variants ────────────────────────────────────────────────
+	_register(MonsterData.create(&"assassin", "Assassin", 3, 4, 4, 3, 1, null,                                        6, &"human_assasin"))

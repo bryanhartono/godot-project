@@ -24,9 +24,10 @@ const LOOT_LOSS_GEMS_MIN := 5
 const LOOT_LOSS_GEMS_MAX := 10
 const LOOT_LOSS_MONSTER  := 0.10
 
-var gems:  int   = 100
-var owned: Array = []   # Array[OwnedMonster]
-var squad: Array = []   # Array[MonsterData]
+var gems:     int   = 100
+var trophies: int   = 0
+var owned:    Array = []   # Array[OwnedMonster]
+var squad:    Array = []   # Array[MonsterData]
 
 var calendar_day:    int    = 1
 var last_claim_date: String = ""
@@ -46,6 +47,12 @@ func _ready() -> void:
 		_save()
 
 # ── Squad ─────────────────────────────────────────────────────────────────────
+
+## +10 on win, -8 on loss, floored at 0.
+func update_trophies(won: bool) -> void:
+	trophies = maxi(0, trophies + (10 if won else -8))
+	if save_enabled:
+		_save()
 
 func set_squad(new_squad: Array[MonsterData]) -> void:
 	var cost := 0
@@ -190,6 +197,7 @@ func _parse_date(s: String) -> Dictionary:
 
 func _init_fresh() -> void:
 	gems            = 100
+	trophies        = 0
 	calendar_day    = 1
 	last_claim_date = ""
 	missed_days     = []
@@ -215,6 +223,7 @@ func _save() -> void:
 		squad_arr.append(str(m.id))
 	var payload := {
 		"gems":            gems,
+		"trophies":        trophies,
 		"owned":           owned_arr,
 		"squad":           squad_arr,
 		"calendar_day":    calendar_day,
@@ -232,6 +241,7 @@ func _load() -> void:
 		_init_fresh()
 		return
 	gems            = d.get("gems",            100)
+	trophies        = d.get("trophies",        0)
 	calendar_day    = d.get("calendar_day",    1)
 	last_claim_date = d.get("last_claim_date", "")
 	missed_days     = d.get("missed_days",     [])

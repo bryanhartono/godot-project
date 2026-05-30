@@ -28,6 +28,11 @@ layout_mode = 2
 text = "Gems: 100"
 horizontal_alignment = 1
 
+[node name="TrophiesLabel" type="Label" parent="CanvasLayer/CenterContainer/VBoxContainer" unique_id=1944638407]
+layout_mode = 2
+text = "Trophies: 0"
+horizontal_alignment = 1
+
 [node name="DailyBtn" type="Button" parent="CanvasLayer/CenterContainer/VBoxContainer" unique_id=1044925176]
 layout_mode = 2
 text = "Daily Reward"
@@ -39,3 +44,7 @@ text = "My Squad"
 [node name="PlayBtn" type="Button" parent="CanvasLayer/CenterContainer/VBoxContainer" unique_id=899449508]
 layout_mode = 2
 text = "Play"
+
+[node name="RankedBtn" type="Button" parent="CanvasLayer/CenterContainer/VBoxContainer" unique_id=1161104880]
+layout_mode = 2
+text = "Ranked"
