@@ -16,8 +16,8 @@ const BAR_H       := 2.5
 const BAR_LIFT    := SPRITE_LIFT + 28.0   # above sprite top
 
 
-const COLOR_LIGHT   := Color(0.30, 0.42, 0.30)
-const COLOR_DARK    := Color(0.24, 0.34, 0.24)
+const COLOR_LIGHT   := Color(0.38, 0.47, 0.25)
+const COLOR_DARK    := Color(0.26, 0.33, 0.17)
 const COLOR_MOVE    := Color(0.30, 0.55, 0.95, 0.45)
 const COLOR_ATTACK  := Color(0.90, 0.30, 0.30, 0.85)
 const COLOR_ABILITY := Color(0.95, 0.85, 0.20, 0.85)
@@ -60,6 +60,7 @@ func _ready() -> void:
 		config.difficulty   = 2
 
 	match_state = MatchState.new(Board.new(BOARD_W, BOARD_H))
+	_build_background()
 	_build_board()
 	_build_ui()
 	_setup_camera()
@@ -101,6 +102,7 @@ func sync_sprites() -> void:
 	for u in _sprites.keys():
 		var spr: AnimatedSprite2D = _sprites[u]
 		if not u.is_alive():
+			AudioManager.play_sfx(&"unit_death")
 			spr.queue_free()
 			_sprites.erase(u)
 			_idle_anims.erase(u)
@@ -130,6 +132,7 @@ func play_attack_animation(unit: BattleUnit) -> void:
 	var atk_anim: StringName  = "attack_back"  if unit.team == 0 else "attack_front"
 	var idle_anim: StringName = _idle_anims.get(unit, &"idle_front")
 	spr.play(atk_anim)
+	AudioManager.play_sfx(&"attack")
 	get_tree().create_timer(0.4).timeout.connect(func():
 		if _sprites.has(unit) and is_instance_valid(_sprites[unit]):
 			_sprites[unit].play(idle_anim)
@@ -285,6 +288,7 @@ func _show_loot_overlay(won: bool) -> void:
 	add_child(layer)
 
 func _on_collect_loot() -> void:
+	AudioManager.play_sfx(&"ui_click")
 	if _loot_overlay != null:
 		_loot_overlay.queue_free()
 		_loot_overlay = null
@@ -296,14 +300,17 @@ func _on_collect_loot() -> void:
 # ── Button callbacks ──────────────────────────────────────────────────────────
 
 func _on_end_turn() -> void:
+	AudioManager.play_sfx(&"ui_click")
 	if _current_state is PlayerTurnState:
 		(_current_state as PlayerTurnState).on_end_turn(self)
 
 func _on_auto_place() -> void:
+	AudioManager.play_sfx(&"ui_click")
 	if _current_state is DeployState:
 		(_current_state as DeployState).auto_place(self)
 
 func _on_play_again() -> void:
+	AudioManager.play_sfx(&"ui_click")
 	var new_config           := MatchConfig.new()
 	new_config.player_squad.assign(PlayerProfile.squad)
 	new_config.enemy_squad    = SquadPicker.random_squad(10)
@@ -312,6 +319,7 @@ func _on_play_again() -> void:
 	get_tree().change_scene_to_file("res://scenes/battle/match_view.tscn")
 
 func _on_go_to_menu() -> void:
+	AudioManager.play_sfx(&"ui_click")
 	get_tree().change_scene_to_file("res://scenes/hub/hub.tscn")
 
 # ── Coordinate helpers ────────────────────────────────────────────────────────
@@ -326,6 +334,15 @@ func screen_to_grid(s: Vector2) -> Vector2i:
 					roundi((s.y / hh - s.x / hw) * 0.5))
 
 # ── Board construction ────────────────────────────────────────────────────────
+
+func _build_background() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = -1
+	add_child(layer)
+	var bg := ColorRect.new()
+	bg.color = Color(0.10, 0.06, 0.02)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(bg)
 
 func _build_board() -> void:
 	var hw      := TILE_W * 0.5
@@ -354,25 +371,28 @@ func _build_ui() -> void:
 
 	_turn_label = Label.new()
 	_turn_label.position = Vector2(16, 16)
+	_turn_label.add_theme_font_size_override("font_size", 20)
 	layer.add_child(_turn_label)
 
 	_result_label = Label.new()
 	_result_label.position = Vector2(16, 44)
+	_result_label.add_theme_font_size_override("font_size", 18)
 	layer.add_child(_result_label)
 
 	_end_btn = Button.new()
 	_end_btn.text = "End Turn"
-	_end_btn.position = Vector2(16, 80)
+	_end_btn.position = Vector2(16, 76)
 	_end_btn.pressed.connect(_on_end_turn)
 	layer.add_child(_end_btn)
 
 	_info_label = Label.new()
-	_info_label.position = Vector2(16, 120)
+	_info_label.position = Vector2(16, 124)
+	_info_label.add_theme_font_size_override("font_size", 17)
 	layer.add_child(_info_label)
 
 	_auto_btn = Button.new()
 	_auto_btn.text = "Auto-place"
-	_auto_btn.position = Vector2(16, 160)
+	_auto_btn.position = Vector2(16, 158)
 	_auto_btn.pressed.connect(_on_auto_place)
 	layer.add_child(_auto_btn)
 

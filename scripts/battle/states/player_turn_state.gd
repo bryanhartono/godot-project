@@ -39,6 +39,7 @@ func _on_tile_clicked(ctx: Node, g: Vector2i) -> void:
 		return
 	if _selected != null and g in _move_targets:
 		ms.move_unit(_selected, g)
+		AudioManager.play_sfx(&"move")
 		_after_action(ctx)
 		return
 	if clicked != null and clicked.team == ms.current_team:

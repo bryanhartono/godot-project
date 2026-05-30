@@ -8,12 +8,20 @@ extends Node
 @onready var _ranked_btn:    Button = $CanvasLayer/CenterContainer/VBoxContainer/RankedBtn
 
 func _ready() -> void:
+	_build_background()
 	PlayerProfile.tick_calendar()
 	$CanvasLayer/CenterContainer/VBoxContainer/DailyBtn.pressed.connect(_on_daily_pressed)
 	$CanvasLayer/CenterContainer/VBoxContainer/SquadBtn.pressed.connect(_on_squad_pressed)
 	$CanvasLayer/CenterContainer/VBoxContainer/PlayBtn.pressed.connect(_on_play_pressed)
 	$CanvasLayer/CenterContainer/VBoxContainer/RankedBtn.pressed.connect(_on_ranked_pressed)
 	_refresh()
+
+func _build_background() -> void:
+	var bg := ColorRect.new()
+	bg.color = Color(0.10, 0.06, 0.02)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	$CanvasLayer.add_child(bg)
+	$CanvasLayer.move_child(bg, 0)
 
 func _refresh() -> void:
 	_gems_label.text    = "Gems: %d" % PlayerProfile.gems
@@ -25,13 +33,16 @@ func _refresh() -> void:
 	_daily_btn.text = "Daily Reward — READY" if not status["claimed"] else "Daily Reward"
 
 func _on_daily_pressed() -> void:
+	AudioManager.play_sfx(&"ui_click")
 	PlayerProfile.tick_calendar()
 	_show_calendar_popup()
 
 func _on_squad_pressed() -> void:
+	AudioManager.play_sfx(&"ui_click")
 	get_tree().change_scene_to_file("res://scenes/hub/squad_builder.tscn")
 
 func _on_play_pressed() -> void:
+	AudioManager.play_sfx(&"ui_click")
 	var cfg       := MatchConfig.new()
 	cfg.player_squad.assign(PlayerProfile.squad)
 	cfg.enemy_squad   = SquadPicker.random_squad(PlayerProfile.BUDGET)
@@ -40,6 +51,7 @@ func _on_play_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/battle/match_view.tscn")
 
 func _on_ranked_pressed() -> void:
+	AudioManager.play_sfx(&"ui_click")
 	var cfg       := MatchConfig.new()
 	cfg.player_squad.assign(PlayerProfile.squad)
 	cfg.enemy_squad   = RankedPool.pick_opponent(PlayerProfile.trophies)

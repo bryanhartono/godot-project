@@ -38,6 +38,7 @@ func _try_place(ctx: Node, g: Vector2i) -> void:
 		return
 	var data := _queue.pop_front() as MonsterData
 	ctx.spawn_unit(data, 0, g)
+	AudioManager.play_sfx(&"place_unit")
 	_highlight_valid_tiles(ctx)
 	_update_label(ctx)
 	if _queue.is_empty():
