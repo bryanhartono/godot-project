@@ -48,7 +48,7 @@ func _show_calendar_popup() -> void:
 
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.theme_override_constants["separation"] = 10
+	vbox.add_theme_constant_override("separation", 10)
 	center.add_child(vbox)
 
 	var title := Label.new()
@@ -59,7 +59,7 @@ func _show_calendar_popup() -> void:
 
 	var hbox := HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.theme_override_constants["separation"] = 8
+	hbox.add_theme_constant_override("separation", 8)
 	vbox.add_child(hbox)
 
 	var status:      Dictionary = PlayerProfile.daily_status()
@@ -125,5 +125,8 @@ func _show_calendar_popup() -> void:
 
 	var close_btn := Button.new()
 	close_btn.text = "Close"
-	close_btn.pressed.connect(func(): layer.queue_free(); _refresh())
+	close_btn.pressed.connect(func():
+		layer.queue_free()
+		_refresh()
+	)
 	vbox.add_child(close_btn)

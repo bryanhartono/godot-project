@@ -12,7 +12,7 @@ var _working_squad: Array[MonsterData] = []
 var _card_btns: Dictionary = {}   # MonsterData -> Button
 
 func _ready() -> void:
-	_working_squad = Array[MonsterData](PlayerProfile.squad.duplicate())
+	_working_squad.assign(PlayerProfile.squad)
 	$CanvasLayer/VBoxContainer/TopBar/BackBtn.pressed.connect(_on_back_pressed)
 	_populate_cards()
 	_refresh()
