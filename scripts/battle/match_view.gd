@@ -135,10 +135,13 @@ func show_win_lose_overlay(winner: int) -> void:
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(panel)
 
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+
 	var vbox := VBoxContainer.new()
-	vbox.set_anchors_preset(Control.PRESET_CENTER)
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	layer.add_child(vbox)
+	center.add_child(vbox)
 
 	var banner := Label.new()
 	banner.text = "Victory!" if winner == 0 else "Defeat"
@@ -176,10 +179,13 @@ func _show_loot_overlay(won: bool) -> void:
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(panel)
 
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+
 	var vbox := VBoxContainer.new()
-	vbox.set_anchors_preset(Control.PRESET_CENTER)
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	layer.add_child(vbox)
+	center.add_child(vbox)
 
 	var title := Label.new()
 	title.text = "Rewards"
