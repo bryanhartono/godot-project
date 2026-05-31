@@ -53,6 +53,10 @@ var _initiative_slots:    Array[Panel]        = []
 var _initiative_styles:   Array[StyleBoxFlat]  = []
 var _initiative_labels:   Array[Label]         = []
 var _stat_popup_layer:    CanvasLayer = null
+var _unit_card_layer:     CanvasLayer = null
+var _card_map:            Dictionary  = {}   # MonsterData -> Control
+var _dragging_data:       MonsterData = null
+var _drag_ghost:          Control     = null
 var _overlay:             Node = null
 var _loot_overlay:        Node = null
 var _again_btn:           Button = null
@@ -85,6 +89,24 @@ func _input(event: InputEvent) -> void:
 			_hover_poly.visible  = true
 		else:
 			_hover_poly.visible = false
+
+	# ── Card drag ─────────────────────────────────────────────────────────────
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if _dragging_data == null and not _card_map.is_empty():
+			var mpos := get_viewport().get_mouse_position()
+			for data: MonsterData in _card_map:
+				var card: Control = _card_map[data]
+				if card.get_global_rect().has_point(mpos):
+					_start_card_drag(data, card)
+					get_viewport().set_input_as_handled()
+					return
+
+	if _dragging_data != null:
+		if event is InputEventMouseMotion and _drag_ghost != null:
+			_drag_ghost.set_position(get_viewport().get_mouse_position() - Vector2(32, 42))
+		elif event is InputEventMouseButton and not event.pressed:
+			_finish_card_drag()
+			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _current_state:
@@ -320,7 +342,7 @@ func show_unit_popup(unit: BattleUnit) -> void:
 
 	for line: String in [
 		"HP   %d / %d" % [unit.current_hp, unit.data.max_hp],
-		"ATK  %d" % unit.data.attack,
+		"ATK  %d" % unit.data.atk,
 		"SPD  %d" % unit.data.speed,
 		"MOV  %d" % unit.data.move_range,
 	]:
@@ -403,6 +425,123 @@ func set_labels(turn: String, _result: String, info: String) -> void:
 	_turn_label.text = turn
 	_info_label.text = info
 
+# ── Unit card deploy tray ─────────────────────────────────────────────────────
+
+func show_unit_cards(queue: Array[MonsterData]) -> void:
+	hide_unit_cards()
+	_unit_card_layer = CanvasLayer.new()
+	_unit_card_layer.layer = 3
+	add_child(_unit_card_layer)
+
+	# Tray anchored above the bottom panel
+	var tray_ctrl := Control.new()
+	tray_ctrl.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	tray_ctrl.offset_top    = -96 - 96 - 10
+	tray_ctrl.offset_bottom = -96 - 6
+	tray_ctrl.theme = AppTheme.game_theme
+	_unit_card_layer.add_child(tray_ctrl)
+
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_DISABLED
+	tray_ctrl.add_child(scroll)
+
+	var hbox := HBoxContainer.new()
+	hbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hbox.add_theme_constant_override("separation", 8)
+	scroll.add_child(hbox)
+
+	_card_map.clear()
+	for data: MonsterData in queue:
+		var card := _build_unit_card(data)
+		hbox.add_child(card)
+		_card_map[data] = card
+
+func _build_unit_card(data: MonsterData) -> Control:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(68, 88)
+	card.mouse_filter        = Control.MOUSE_FILTER_IGNORE
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left",   6)
+	margin.add_theme_constant_override("margin_right",  6)
+	margin.add_theme_constant_override("margin_top",    5)
+	margin.add_theme_constant_override("margin_bottom", 5)
+	card.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 3)
+	margin.add_child(vbox)
+
+	var name_lbl := Label.new()
+	name_lbl.text = data.display_name
+	name_lbl.add_theme_font_size_override("font_size", 11)
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.autowrap_mode        = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(name_lbl)
+
+	var sep := HSeparator.new()
+	vbox.add_child(sep)
+
+	for line: String in ["HP  %d" % data.max_hp, "ATK %d" % data.atk, "SPD %d" % data.speed]:
+		var lbl := Label.new()
+		lbl.text = line
+		lbl.add_theme_font_size_override("font_size", 10)
+		vbox.add_child(lbl)
+
+	return card
+
+func remove_unit_card(data: MonsterData) -> void:
+	if _card_map.has(data):
+		(_card_map[data] as Control).queue_free()
+		_card_map.erase(data)
+
+func hide_unit_cards() -> void:
+	_dragging_data = null
+	_drag_ghost    = null
+	_card_map.clear()
+	if _unit_card_layer != null:
+		_unit_card_layer.queue_free()
+		_unit_card_layer = null
+
+func _start_card_drag(data: MonsterData, card: Control) -> void:
+	_dragging_data = data
+	card.modulate  = Color(1.0, 1.0, 1.0, 0.30)
+
+	var ghost := PanelContainer.new()
+	ghost.custom_minimum_size = Vector2(68, 88)
+	ghost.mouse_filter        = Control.MOUSE_FILTER_IGNORE
+	ghost.theme               = AppTheme.game_theme
+	ghost.z_index             = 10
+
+	var lbl := Label.new()
+	lbl.text                   = data.display_name
+	lbl.add_theme_font_size_override("font_size", 11)
+	lbl.horizontal_alignment   = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment     = VERTICAL_ALIGNMENT_CENTER
+	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ghost.add_child(lbl)
+
+	ghost.position = get_viewport().get_mouse_position() - Vector2(34, 44)
+	_unit_card_layer.add_child(ghost)
+	_drag_ghost = ghost
+
+func _finish_card_drag() -> void:
+	var data := _dragging_data
+	_dragging_data = null
+
+	if _drag_ghost != null:
+		_drag_ghost.queue_free()
+		_drag_ghost = null
+
+	if _card_map.has(data):
+		(_card_map[data] as Control).modulate = Color(1, 1, 1, 1)
+
+	var grid_pos := screen_to_grid(get_local_mouse_position())
+	if _current_state is DeployState:
+		(_current_state as DeployState).on_card_dropped(self, data, grid_pos)
+
 # ── Win/lose + loot overlays ──────────────────────────────────────────────────
 
 func show_win_lose_overlay(winner: int) -> void:
@@ -419,6 +558,7 @@ func show_win_lose_overlay(winner: int) -> void:
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.theme = AppTheme.game_theme
 	layer.add_child(center)
 
 	var vbox := VBoxContainer.new()
@@ -467,6 +607,7 @@ func _show_loot_overlay(won: bool) -> void:
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.theme = AppTheme.game_theme
 	layer.add_child(center)
 
 	var vbox := VBoxContainer.new()
