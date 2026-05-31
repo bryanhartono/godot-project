@@ -8,12 +8,12 @@ func _ready() -> void:
 
 func _build_theme() -> Theme:
 	var theme := Theme.new()
-	var font: FontFile = (load("res://assets/Fonts/Kenney Pixel Square.ttf") as FontFile).duplicate()
-	font.antialiasing        = TextServer.FONT_ANTIALIASING_NONE
+	var font: FontFile = (load("res://assets/Fonts/Kenney Mini.ttf") as FontFile).duplicate()
+	font.antialiasing         = TextServer.FONT_ANTIALIASING_NONE
 	font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-	font.hinting             = TextServer.HINTING_NONE
+	font.hinting              = TextServer.HINTING_NONE
 	theme.default_font      = font
-	theme.default_font_size = 20
+	theme.default_font_size = 18
 
 	theme.set_stylebox("normal",   "Button", _btn_box(Color(0.545, 0.369, 0.173)))
 	theme.set_stylebox("hover",    "Button", _btn_box(Color(0.769, 0.529, 0.243), true))

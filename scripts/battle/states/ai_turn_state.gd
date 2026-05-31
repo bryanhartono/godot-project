@@ -11,6 +11,7 @@ func _init(difficulty: int = 2) -> void:
 	_difficulty = difficulty
 
 func enter(ctx: Node) -> void:
+	ctx.hide_unit_popup()
 	var unit: BattleUnit = ctx.match_state.active_unit
 	var name_str: String = unit.data.display_name if unit != null else "Enemy"
 	ctx.set_labels("Enemy Turn", "", name_str)

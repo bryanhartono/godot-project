@@ -41,6 +41,7 @@ var _cancel_btn:          Button
 var _initiative_slots:    Array[Panel]         = []
 var _initiative_styles:   Array[StyleBoxFlat]  = []
 var _initiative_labels:   Array[Label]         = []
+var _stat_popup_layer:    CanvasLayer = null
 var _overlay:             Node = null
 var _loot_overlay:        Node = null
 var _again_btn:           Button = null
@@ -181,13 +182,85 @@ func _play_hit_shake(unit: BattleUnit) -> void:
 func show_cancel_btn(show: bool) -> void:
 	if _cancel_btn != null:
 		_cancel_btn.visible = show
-	if _wait_btn != null:
-		_wait_btn.visible = not show
 
 func set_deploy_mode(on: bool) -> void:
-	if _auto_btn  != null: _auto_btn.visible  = on
-	if _wait_btn  != null: _wait_btn.visible  = not on
-	if _cancel_btn != null and on: _cancel_btn.visible = false
+	if _auto_btn   != null: _auto_btn.visible  = on
+	if _wait_btn   != null: _wait_btn.visible   = not on
+	if _cancel_btn != null: _cancel_btn.visible = false  # cancel only appears after a move
+
+func show_unit_popup(unit: BattleUnit) -> void:
+	hide_unit_popup()
+	var layer := CanvasLayer.new()
+	layer.layer = 5
+	_stat_popup_layer = layer
+	add_child(layer)
+
+	# Full-screen transparent catcher — any click closes the popup
+	var catcher := Control.new()
+	catcher.set_anchors_preset(Control.PRESET_FULL_RECT)
+	catcher.mouse_filter = Control.MOUSE_FILTER_STOP
+	catcher.gui_input.connect(func(ev: InputEvent) -> void:
+		if ev is InputEventMouseButton and ev.pressed:
+			hide_unit_popup()
+	)
+	layer.add_child(catcher)
+
+	# Convert world position to screen position accounting for camera
+	var world_pos: Vector2 = grid_to_screen(unit.grid_pos) - Vector2(0, SPRITE_LIFT + 48)
+	var screen_pos: Vector2 = get_global_transform_with_canvas() * world_pos
+
+	var popup := PanelContainer.new()
+	popup.position = screen_pos - Vector2(70, 100)
+	layer.add_child(popup)
+
+	# Clamp so popup stays on screen
+	var vp_size: Vector2 = get_viewport().get_visible_rect().size
+	popup.position.x = clampf(popup.position.x, 6.0, vp_size.x - 146.0)
+	popup.position.y = clampf(popup.position.y, 80.0, vp_size.y - 200.0)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left",   10)
+	margin.add_theme_constant_override("margin_right",  10)
+	margin.add_theme_constant_override("margin_top",    8)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 3)
+	margin.add_child(vbox)
+
+	var name_lbl := Label.new()
+	name_lbl.text = unit.data.display_name
+	name_lbl.add_theme_font_size_override("font_size", 15)
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(name_lbl)
+
+	var sep := HSeparator.new()
+	vbox.add_child(sep)
+
+	for line: String in [
+		"HP   %d / %d" % [unit.current_hp, unit.data.max_hp],
+		"ATK  %d" % unit.data.attack,
+		"SPD  %d" % unit.data.speed,
+		"MOV  %d" % unit.data.move_range,
+	]:
+		var lbl := Label.new()
+		lbl.text = line
+		lbl.add_theme_font_size_override("font_size", 13)
+		vbox.add_child(lbl)
+
+	if unit.data.ability != null:
+		var ab_lbl := Label.new()
+		ab_lbl.text = AbilityData.Type.keys()[unit.data.ability.type]
+		ab_lbl.add_theme_font_size_override("font_size", 12)
+		ab_lbl.modulate = Color(0.95, 0.85, 0.20)
+		ab_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(ab_lbl)
+
+func hide_unit_popup() -> void:
+	if _stat_popup_layer != null:
+		_stat_popup_layer.queue_free()
+		_stat_popup_layer = null
 
 func _create_hp_bar(unit: BattleUnit, pos: Vector2i) -> void:
 	var bar_pos := grid_to_screen(pos) - Vector2(0, BAR_LIFT)
@@ -526,31 +599,34 @@ func _build_ui() -> void:
 	_info_label.add_theme_font_size_override("font_size", 16)
 	bot_row.add_child(_info_label)
 
-	# Button slot — all three share the same anchor slot; only one visible at a time
-	var btn_slot := Control.new()
-	btn_slot.custom_minimum_size  = Vector2(130, 0)
-	btn_slot.size_flags_vertical  = Control.SIZE_EXPAND_FILL
-	bot_row.add_child(btn_slot)
-
-	_wait_btn = Button.new()
-	_wait_btn.text = "Wait"
-	_wait_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_wait_btn.pressed.connect(_on_wait)
-	btn_slot.add_child(_wait_btn)
+	# Action buttons — Cancel + Wait sit side by side; Auto-place replaces both during deploy
+	var btn_row_inner := HBoxContainer.new()
+	btn_row_inner.add_theme_constant_override("separation", 6)
+	btn_row_inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	bot_row.add_child(btn_row_inner)
 
 	_cancel_btn = Button.new()
-	_cancel_btn.text    = "Cancel"
-	_cancel_btn.visible = false
-	_cancel_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_cancel_btn.text                = "Cancel"
+	_cancel_btn.visible             = false
+	_cancel_btn.custom_minimum_size = Vector2(96, 0)
+	_cancel_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_cancel_btn.pressed.connect(_on_cancel_move)
-	btn_slot.add_child(_cancel_btn)
+	btn_row_inner.add_child(_cancel_btn)
+
+	_wait_btn = Button.new()
+	_wait_btn.text                = "Wait"
+	_wait_btn.custom_minimum_size = Vector2(96, 0)
+	_wait_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_wait_btn.pressed.connect(_on_wait)
+	btn_row_inner.add_child(_wait_btn)
 
 	_auto_btn = Button.new()
-	_auto_btn.text    = "Auto-place"
-	_auto_btn.visible = false
-	_auto_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_auto_btn.text                = "Auto-place"
+	_auto_btn.visible             = false
+	_auto_btn.custom_minimum_size = Vector2(110, 0)
+	_auto_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_auto_btn.pressed.connect(_on_auto_place)
-	btn_slot.add_child(_auto_btn)
+	btn_row_inner.add_child(_auto_btn)
 
 func _update_initiative_strip() -> void:
 	if match_state.active_unit == null:
