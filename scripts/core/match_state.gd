@@ -162,6 +162,17 @@ func move_unit(unit: BattleUnit, pos: Vector2i) -> bool:
 	unit.has_moved = true
 	return true
 
+## Enemy tile positions within attack range from an arbitrary position (for move preview).
+func attack_tiles_from(unit: BattleUnit, from_pos: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for other: BattleUnit in units:
+		if other.team == unit.team or not other.is_alive():
+			continue
+		var dist: int = abs(other.grid_pos.x - from_pos.x) + abs(other.grid_pos.y - from_pos.y)
+		if dist <= unit.data.atk_range:
+			out.append(other.grid_pos)
+	return out
+
 ## Living enemy units within Manhattan attack range.
 func legal_targets(unit: BattleUnit) -> Array[BattleUnit]:
 	var out: Array[BattleUnit] = []

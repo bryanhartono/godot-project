@@ -1,19 +1,27 @@
 # scripts/ui/app_theme.gd
 extends Node
 
-## Warm retro global theme — applied to the root Window so all controls inherit it.
+## Warm retro global theme. Expose game_theme so UI scripts can set it directly
+## on their root Control — more reliable than relying on Window inheritance
+## through CanvasLayer boundaries.
+var game_theme: Theme
 
 func _ready() -> void:
-	get_tree().root.theme = _build_theme()
+	game_theme = _build_theme()
+	get_tree().root.theme = game_theme
 
 func _build_theme() -> Theme:
 	var theme := Theme.new()
-	var font: FontFile = (load("res://assets/Fonts/Kenney Mini.ttf") as FontFile).duplicate()
+	var font := load("res://assets/Fonts/Kenney Mini.ttf") as FontFile
 	font.antialiasing         = TextServer.FONT_ANTIALIASING_NONE
 	font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
 	font.hinting              = TextServer.HINTING_NONE
+	font.clear_cache()  # force glyph regeneration with new settings
 	theme.default_font      = font
-	theme.default_font_size = 18
+	theme.default_font_size = 16
+	# Explicitly set per-type so engine doesn't fall back to default
+	theme.set_font("font", "Label",  font)
+	theme.set_font("font", "Button", font)
 
 	theme.set_stylebox("normal",   "Button", _btn_box(Color(0.545, 0.369, 0.173)))
 	theme.set_stylebox("hover",    "Button", _btn_box(Color(0.769, 0.529, 0.243), true))

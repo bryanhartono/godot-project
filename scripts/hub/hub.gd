@@ -29,6 +29,7 @@ func _build_ui() -> void:
 	margin.add_theme_constant_override("margin_right",  28)
 	margin.add_theme_constant_override("margin_top",    52)
 	margin.add_theme_constant_override("margin_bottom", 36)
+	margin.theme = AppTheme.game_theme
 	canvas.add_child(margin)
 
 	var vbox := VBoxContainer.new()

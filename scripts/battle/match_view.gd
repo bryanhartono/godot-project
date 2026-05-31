@@ -3,6 +3,15 @@ extends Node2D
 
 ## State machine host for a single match.
 
+## Explicit preloads so the VS Code GDScript language server resolves these
+## class_name types locally. Godot uses the global class registry at runtime.
+const BaseBattleState = preload("res://scripts/battle/states/base_battle_state.gd")
+const DeployState     = preload("res://scripts/battle/states/deploy_state.gd")
+const PlayerTurnState = preload("res://scripts/battle/states/player_turn_state.gd")
+const WinLoseState    = preload("res://scripts/battle/states/win_lose_state.gd")
+const AiTurnState     = preload("res://scripts/battle/states/ai_turn_state.gd")
+const SquadPicker     = preload("res://scripts/battle/squad_picker.gd")
+
 const TILE_W      := 64
 const TILE_H      := 32
 const BOARD_W     := 7
@@ -35,10 +44,12 @@ var _current_state: BaseBattleState = null
 ## UI nodes.
 var _turn_label:          Label
 var _info_label:          Label
+var _move_btn:            Button
 var _wait_btn:            Button
 var _auto_btn:            Button
-var _cancel_btn:          Button
-var _initiative_slots:    Array[Panel]         = []
+var _path_overlays:       Array[Polygon2D]    = []
+var _ghost_spr:           AnimatedSprite2D    = null
+var _initiative_slots:    Array[Panel]        = []
 var _initiative_styles:   Array[StyleBoxFlat]  = []
 var _initiative_labels:   Array[Label]         = []
 var _stat_popup_layer:    CanvasLayer = null
@@ -179,14 +190,82 @@ func _play_hit_shake(unit: BattleUnit) -> void:
 	t.tween_property(spr, "position", origin + Vector2(d*0.5,0), 0.03)
 	t.tween_property(spr, "position", origin,                    0.03)
 
-func show_cancel_btn(show: bool) -> void:
-	if _cancel_btn != null:
-		_cancel_btn.visible = show
+func show_move_btn(show: bool) -> void:
+	if _move_btn != null:
+		_move_btn.visible = show
 
 func set_deploy_mode(on: bool) -> void:
-	if _auto_btn   != null: _auto_btn.visible  = on
-	if _wait_btn   != null: _wait_btn.visible   = not on
-	if _cancel_btn != null: _cancel_btn.visible = false  # cancel only appears after a move
+	if _auto_btn != null: _auto_btn.visible = on
+	if _wait_btn != null: _wait_btn.visible  = not on
+	if _move_btn != null: _move_btn.visible  = false
+
+func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array[Vector2i] = []) -> void:
+	clear_move_preview()
+	if path.size() < 2:
+		return
+	var hw := TILE_W * 0.5
+	var hh := TILE_H * 0.5
+	var diamond := PackedVector2Array([
+		Vector2(0, -hh), Vector2(hw, 0), Vector2(0, hh), Vector2(-hw, 0)
+	])
+	# Attack range from destination — red tint behind path trail
+	for g in atk_tiles:
+		var poly := Polygon2D.new()
+		poly.polygon  = diamond
+		poly.position = grid_to_screen(g)
+		poly.color    = _base_color(g).lerp(Color(0.90, 0.20, 0.20), 0.50)
+		poly.z_index  = 3
+		add_child(poly)
+		_path_overlays.append(poly)
+	# Path trail — intermediate tiles
+	for i in range(1, path.size() - 1):
+		var poly := Polygon2D.new()
+		poly.polygon  = diamond
+		poly.position = grid_to_screen(path[i])
+		poly.color    = Color(0.20, 0.80, 0.90, 0.55)
+		poly.z_index  = 4
+		add_child(poly)
+		_path_overlays.append(poly)
+	# Destination tile — brighter
+	var dest_poly := Polygon2D.new()
+	dest_poly.polygon  = diamond
+	dest_poly.position = grid_to_screen(path[-1])
+	dest_poly.color    = Color(0.20, 0.85, 0.95, 0.75)
+	dest_poly.z_index  = 4
+	add_child(dest_poly)
+	_path_overlays.append(dest_poly)
+	# Ghost sprite at destination
+	var src_spr: AnimatedSprite2D = _sprites.get(unit)
+	if src_spr != null:
+		_ghost_spr               = AnimatedSprite2D.new()
+		_ghost_spr.sprite_frames = src_spr.sprite_frames
+		_ghost_spr.scale         = src_spr.scale
+		_ghost_spr.flip_h        = src_spr.flip_h
+		_ghost_spr.modulate      = Color(1.0, 1.0, 1.0, 0.40)
+		_ghost_spr.position      = grid_to_screen(path[-1]) - Vector2(0, SPRITE_LIFT)
+		_ghost_spr.z_index       = path[-1].x + path[-1].y
+		_ghost_spr.play(_idle_anims.get(unit, &"idle_front"))
+		add_child(_ghost_spr)
+
+func clear_move_preview() -> void:
+	for poly in _path_overlays:
+		if is_instance_valid(poly):
+			poly.queue_free()
+	_path_overlays.clear()
+	if _ghost_spr != null and is_instance_valid(_ghost_spr):
+		_ghost_spr.queue_free()
+		_ghost_spr = null
+
+func walk_unit_to(unit: BattleUnit, path: Array[Vector2i], on_done: Callable) -> void:
+	var spr: AnimatedSprite2D = _sprites.get(unit)
+	if spr == null or path.size() < 2:
+		on_done.call()
+		return
+	var t := create_tween()
+	for i in range(1, path.size()):
+		t.tween_property(spr, "position",
+			grid_to_screen(path[i]) - Vector2(0, SPRITE_LIFT), 0.12)
+	t.tween_callback(on_done)
 
 func show_unit_popup(unit: BattleUnit) -> void:
 	hide_unit_popup()
@@ -211,6 +290,7 @@ func show_unit_popup(unit: BattleUnit) -> void:
 
 	var popup := PanelContainer.new()
 	popup.position = screen_pos - Vector2(70, 100)
+	popup.theme = AppTheme.game_theme
 	layer.add_child(popup)
 
 	# Clamp so popup stays on screen
@@ -436,9 +516,10 @@ func _on_wait() -> void:
 	if _current_state is PlayerTurnState:
 		(_current_state as PlayerTurnState).on_wait(self)
 
-func _on_cancel_move() -> void:
+func _on_move_confirm() -> void:
+	AudioManager.play_sfx(&"ui_click")
 	if _current_state is PlayerTurnState:
-		(_current_state as PlayerTurnState).on_cancel_move(self)
+		(_current_state as PlayerTurnState).on_move_confirm(self)
 
 func _on_auto_place() -> void:
 	AudioManager.play_sfx(&"ui_click")
@@ -517,6 +598,7 @@ func _build_ui() -> void:
 	var top_ctrl := Control.new()
 	top_ctrl.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	top_ctrl.offset_bottom = 72
+	top_ctrl.theme = AppTheme.game_theme
 	layer.add_child(top_ctrl)
 
 	var top_bg := ColorRect.new()
@@ -572,6 +654,7 @@ func _build_ui() -> void:
 	var bot_ctrl := Control.new()
 	bot_ctrl.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	bot_ctrl.offset_top = -96
+	bot_ctrl.theme = AppTheme.game_theme
 	layer.add_child(bot_ctrl)
 
 	var bot_bg := ColorRect.new()
@@ -599,23 +682,24 @@ func _build_ui() -> void:
 	_info_label.add_theme_font_size_override("font_size", 16)
 	bot_row.add_child(_info_label)
 
-	# Action buttons — Cancel + Wait sit side by side; Auto-place replaces both during deploy
+	# Action buttons — Move + Wait side by side; Move hidden until destination chosen
+	# Auto-place replaces both during deploy phase
 	var btn_row_inner := HBoxContainer.new()
 	btn_row_inner.add_theme_constant_override("separation", 6)
 	btn_row_inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	bot_row.add_child(btn_row_inner)
 
-	_cancel_btn = Button.new()
-	_cancel_btn.text                = "Cancel"
-	_cancel_btn.visible             = false
-	_cancel_btn.custom_minimum_size = Vector2(96, 0)
-	_cancel_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_cancel_btn.pressed.connect(_on_cancel_move)
-	btn_row_inner.add_child(_cancel_btn)
+	_move_btn = Button.new()
+	_move_btn.text                = "Move"
+	_move_btn.visible             = false
+	_move_btn.custom_minimum_size = Vector2(90, 0)
+	_move_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_move_btn.pressed.connect(_on_move_confirm)
+	btn_row_inner.add_child(_move_btn)
 
 	_wait_btn = Button.new()
 	_wait_btn.text                = "Wait"
-	_wait_btn.custom_minimum_size = Vector2(96, 0)
+	_wait_btn.custom_minimum_size = Vector2(90, 0)
 	_wait_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_wait_btn.pressed.connect(_on_wait)
 	btn_row_inner.add_child(_wait_btn)
