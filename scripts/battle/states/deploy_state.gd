@@ -8,12 +8,14 @@ const PLAYER_ROWS: Array[int] = [5, 6]
 var _queue: Array[MonsterData] = []
 
 func enter(ctx: Node) -> void:
+	ctx.set_deploy_mode(true)
 	_queue = ctx.config.player_squad.duplicate()
 	_place_ai_squad(ctx)
 	_highlight_valid_tiles(ctx)
 	_update_label(ctx)
 
 func exit(ctx: Node) -> void:
+	ctx.set_deploy_mode(false)
 	ctx.clear_highlights()
 
 func handle_input(ctx: Node, event: InputEvent) -> void:

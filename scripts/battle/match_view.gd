@@ -15,10 +15,6 @@ const BAR_LIFT    := SPRITE_LIFT + 28.0
 
 const COLOR_LIGHT   := Color(0.38, 0.47, 0.25)
 const COLOR_DARK    := Color(0.26, 0.33, 0.17)
-const COLOR_MOVE    := Color(0.30, 0.55, 0.95, 0.25)
-const COLOR_ATTACK  := Color(0.90, 0.30, 0.30, 0.55)
-const COLOR_ABILITY := Color(0.95, 0.85, 0.20, 0.55)
-
 const PANEL_BG      := Color(0.08, 0.04, 0.01, 0.92)
 const INIT_SLOTS    := 7
 
@@ -28,6 +24,7 @@ var config:      MatchConfig
 
 ## Private rendering.
 var _tiles:      Dictionary = {}   # Vector2i -> Polygon2D
+var _hover_poly: Polygon2D  = null # mouse-hover tile indicator
 var _sprites:    Dictionary = {}   # BattleUnit -> AnimatedSprite2D
 var _idle_anims: Dictionary = {}   # BattleUnit -> StringName
 var _hp_bars:    Dictionary = {}   # BattleUnit -> {bg: Polygon2D, fill: Polygon2D}
@@ -67,6 +64,15 @@ func _ready() -> void:
 	_build_ui()
 	_setup_camera()
 	change_state(DeployState.new())
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and _hover_poly != null and match_state != null:
+		var g := screen_to_grid(get_local_mouse_position())
+		if match_state.board.is_in_bounds(g):
+			_hover_poly.position = grid_to_screen(g)
+			_hover_poly.visible  = true
+		else:
+			_hover_poly.visible = false
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _current_state:
@@ -175,6 +181,13 @@ func _play_hit_shake(unit: BattleUnit) -> void:
 func show_cancel_btn(show: bool) -> void:
 	if _cancel_btn != null:
 		_cancel_btn.visible = show
+	if _wait_btn != null:
+		_wait_btn.visible = not show
+
+func set_deploy_mode(on: bool) -> void:
+	if _auto_btn  != null: _auto_btn.visible  = on
+	if _wait_btn  != null: _wait_btn.visible  = not on
+	if _cancel_btn != null and on: _cancel_btn.visible = false
 
 func _create_hp_bar(unit: BattleUnit, pos: Vector2i) -> void:
 	var bar_pos := grid_to_screen(pos) - Vector2(0, BAR_LIFT)
@@ -221,13 +234,13 @@ func highlight_tiles(move_targets: Array[Vector2i],
 		_tiles[g].color = _base_color(g)
 	for g in move_targets:
 		if _tiles.has(g):
-			_tiles[g].color = COLOR_MOVE
+			_tiles[g].color = _base_color(g).lerp(Color(0.30, 0.55, 0.95), 0.45)
 	for u in atk_targets:
 		if _tiles.has(u.grid_pos):
-			_tiles[u.grid_pos].color = COLOR_ATTACK
+			_tiles[u.grid_pos].color = _base_color(u.grid_pos).lerp(Color(0.90, 0.20, 0.20), 0.55)
 	for g in ability_targets:
 		if _tiles.has(g):
-			_tiles[g].color = COLOR_ABILITY
+			_tiles[g].color = _base_color(g).lerp(Color(0.95, 0.85, 0.20), 0.55)
 
 func clear_highlights() -> void:
 	for g in _tiles:
@@ -410,6 +423,13 @@ func _build_board() -> void:
 			poly.color    = _base_color(g)
 			add_child(poly)
 			_tiles[g] = poly
+	# Hover overlay — a bright white tint drawn above all tiles
+	_hover_poly          = Polygon2D.new()
+	_hover_poly.polygon  = diamond
+	_hover_poly.color    = Color(1.0, 1.0, 1.0, 0.22)
+	_hover_poly.visible  = false
+	_hover_poly.z_index  = 5
+	add_child(_hover_poly)
 
 func _base_color(g: Vector2i) -> Color:
 	return COLOR_LIGHT if (g.x + g.y) % 2 == 0 else COLOR_DARK
@@ -420,33 +440,50 @@ func _build_ui() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
 
-	# ── Top initiative strip ─────────────────────────────────────────
-	var top_panel := ColorRect.new()
-	top_panel.color       = PANEL_BG
-	top_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_panel.position    = Vector2(0, 0)
-	top_panel.size        = Vector2(540, 72)
-	layer.add_child(top_panel)
+	# ── Top strip (anchored to top of screen) ────────────────────────
+	var top_ctrl := Control.new()
+	top_ctrl.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	top_ctrl.offset_bottom = 72
+	layer.add_child(top_ctrl)
+
+	var top_bg := ColorRect.new()
+	top_bg.color        = PANEL_BG
+	top_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	top_ctrl.add_child(top_bg)
+
+	var top_margin := MarginContainer.new()
+	top_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	top_margin.add_theme_constant_override("margin_left",   12)
+	top_margin.add_theme_constant_override("margin_right",  12)
+	top_margin.add_theme_constant_override("margin_top",    8)
+	top_margin.add_theme_constant_override("margin_bottom", 8)
+	top_ctrl.add_child(top_margin)
+
+	var top_row := HBoxContainer.new()
+	top_row.add_theme_constant_override("separation", 8)
+	top_margin.add_child(top_row)
 
 	_turn_label = Label.new()
-	_turn_label.position = Vector2(10, 8)
-	_turn_label.add_theme_font_size_override("font_size", 16)
-	layer.add_child(_turn_label)
+	_turn_label.custom_minimum_size = Vector2(108, 0)
+	_turn_label.vertical_alignment  = VERTICAL_ALIGNMENT_CENTER
+	_turn_label.add_theme_font_size_override("font_size", 15)
+	top_row.add_child(_turn_label)
 
-	var slot_w: float = 64.0
-	var slot_h: float = 48.0
-	var slot_y: float = 12.0
-	var slot_start_x: float = 120.0
+	var slots_row := HBoxContainer.new()
+	slots_row.add_theme_constant_override("separation", 4)
+	slots_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_row.add_child(slots_row)
+
 	for i in INIT_SLOTS:
 		var slot := Panel.new()
-		slot.size         = Vector2(slot_w - 4, slot_h)
-		slot.position     = Vector2(slot_start_x + i * slot_w, slot_y)
+		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0.3, 0.3, 0.3, 0.5)
 		style.set_corner_radius_all(4)
 		slot.add_theme_stylebox_override("panel", style)
-		layer.add_child(slot)
+		slots_row.add_child(slot)
 		_initiative_slots.append(slot)
 		_initiative_styles.append(style)
 
@@ -454,46 +491,66 @@ func _build_ui() -> void:
 		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_font_size_override("font_size", 11)
 		slot.add_child(lbl)
 		_initiative_labels.append(lbl)
 
-	# ── Bottom action panel ──────────────────────────────────────────
-	var bot_panel := ColorRect.new()
-	bot_panel.color        = PANEL_BG
-	bot_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bot_panel.position     = Vector2(0, 860)
-	bot_panel.size         = Vector2(540, 100)
-	layer.add_child(bot_panel)
+	# ── Bottom panel (anchored to bottom of screen) ──────────────────
+	var bot_ctrl := Control.new()
+	bot_ctrl.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	bot_ctrl.offset_top = -96
+	layer.add_child(bot_ctrl)
+
+	var bot_bg := ColorRect.new()
+	bot_bg.color        = PANEL_BG
+	bot_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bot_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bot_ctrl.add_child(bot_bg)
+
+	var bot_margin := MarginContainer.new()
+	bot_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bot_margin.add_theme_constant_override("margin_left",   16)
+	bot_margin.add_theme_constant_override("margin_right",  16)
+	bot_margin.add_theme_constant_override("margin_top",    12)
+	bot_margin.add_theme_constant_override("margin_bottom", 12)
+	bot_ctrl.add_child(bot_margin)
+
+	var bot_row := HBoxContainer.new()
+	bot_row.add_theme_constant_override("separation", 10)
+	bot_margin.add_child(bot_row)
 
 	_info_label = Label.new()
-	_info_label.position = Vector2(10, 872)
-	_info_label.size     = Vector2(310, 76)
-	_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_info_label.vertical_alignment    = VERTICAL_ALIGNMENT_CENTER
+	_info_label.autowrap_mode         = TextServer.AUTOWRAP_WORD_SMART
 	_info_label.add_theme_font_size_override("font_size", 16)
-	layer.add_child(_info_label)
+	bot_row.add_child(_info_label)
+
+	# Button slot — all three share the same anchor slot; only one visible at a time
+	var btn_slot := Control.new()
+	btn_slot.custom_minimum_size  = Vector2(130, 0)
+	btn_slot.size_flags_vertical  = Control.SIZE_EXPAND_FILL
+	bot_row.add_child(btn_slot)
 
 	_wait_btn = Button.new()
-	_wait_btn.text     = "Wait"
-	_wait_btn.position = Vector2(400, 878)
-	_wait_btn.size     = Vector2(128, 50)
+	_wait_btn.text = "Wait"
+	_wait_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_wait_btn.pressed.connect(_on_wait)
-	layer.add_child(_wait_btn)
+	btn_slot.add_child(_wait_btn)
 
 	_cancel_btn = Button.new()
-	_cancel_btn.text    = "Cancel Move"
+	_cancel_btn.text    = "Cancel"
 	_cancel_btn.visible = false
-	_cancel_btn.position = Vector2(400, 878)
-	_cancel_btn.size     = Vector2(128, 50)
+	_cancel_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_cancel_btn.pressed.connect(_on_cancel_move)
-	layer.add_child(_cancel_btn)
+	btn_slot.add_child(_cancel_btn)
 
 	_auto_btn = Button.new()
-	_auto_btn.text     = "Auto-place"
-	_auto_btn.position = Vector2(400, 878)
-	_auto_btn.size     = Vector2(128, 50)
+	_auto_btn.text    = "Auto-place"
+	_auto_btn.visible = false
+	_auto_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_auto_btn.pressed.connect(_on_auto_place)
-	layer.add_child(_auto_btn)
+	btn_slot.add_child(_auto_btn)
 
 func _update_initiative_strip() -> void:
 	if match_state.active_unit == null:

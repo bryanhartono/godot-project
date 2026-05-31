@@ -8,7 +8,10 @@ func _ready() -> void:
 
 func _build_theme() -> Theme:
 	var theme := Theme.new()
-	var font: FontFile = load("res://assets/Fonts/Kenney Pixel Square.ttf")
+	var font: FontFile = (load("res://assets/Fonts/Kenney Pixel Square.ttf") as FontFile).duplicate()
+	font.antialiasing        = TextServer.FONT_ANTIALIASING_NONE
+	font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
+	font.hinting             = TextServer.HINTING_NONE
 	theme.default_font      = font
 	theme.default_font_size = 20
 
