@@ -28,10 +28,10 @@ static var FLAT: Dictionary = {
 #   C3 R0=(227,164,115) R1=(231,154,106) orange-tan → desert
 #   C5 R0=(96,223,235) R1=(114,229,239) bright cyan → snow/ice
 static var CUBE: Dictionary = {
-	&"grass":  Rect2i( 16, 0, 16, 32),  # R0-R1 C1 — olive green
-	&"stone":  Rect2i( 32, 0, 16, 32),  # R0-R1 C2 — purple-gray
-	&"desert": Rect2i( 48, 0, 16, 32),  # R0-R1 C3 — orange-tan
-	&"snow":   Rect2i( 80, 0, 16, 32),  # R0-R1 C5 — bright cyan (brightest ice)
+	&"grass":  Rect2i( 16, 0, 16, 16),  # R0 C1 — olive green cube (16×16, rendered at 4×4 scale = 64×64)
+	&"stone":  Rect2i( 32, 0, 16, 16),  # R0 C2 — purple-gray cube
+	&"desert": Rect2i( 48, 0, 16, 16),  # R0 C3 — orange-tan cube
+	&"snow":   Rect2i( 80, 0, 16, 16),  # R0 C5 — bright cyan cube
 }
 
 # Wall extender — 16x16, drawn below cube sprite for height-2+ tiles.

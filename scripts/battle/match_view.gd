@@ -776,6 +776,7 @@ func _build_board(map: MapData = null) -> void:
 
 	var tile_tex: Texture2D = load(TileRegistry.TEXTURE_PATH)
 	var scale_flat := Vector2(float(TILE_W) / 16.0, float(TILE_H) / 16.0)
+	var scale_cube := Vector2(float(TILE_W) / 16.0, float(TILE_W) / 16.0)  # uniform 4×4, preserves cube aspect ratio
 
 	for y in map.map_rows:
 		for x in map.map_width:
@@ -795,20 +796,20 @@ func _build_board(map: MapData = null) -> void:
 				spr.scale       = scale_flat
 			else:
 				spr.region_rect = TileRegistry.cube_region(map.biome)
-				spr.scale       = scale_flat
+				spr.scale       = scale_cube  # uniform 4×4 preserves 3D cube look
 			spr.position = grid_to_screen(g, h) - Vector2(hw, hh)
 			spr.z_index  = z_base
 			add_child(spr)
 
-			# Wall extender for height 2
+			# For height 2: stack a second cube sprite at h=1 to fill the gap to ground
 			if h == 2:
 				var ext := Sprite2D.new()
 				ext.texture        = tile_tex
 				ext.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 				ext.centered       = false
 				ext.region_enabled = true
-				ext.region_rect    = TileRegistry.WALL_EXTENDER
-				ext.scale          = scale_flat
+				ext.region_rect    = TileRegistry.cube_region(map.biome)
+				ext.scale          = scale_cube
 				ext.position = grid_to_screen(g, 1) - Vector2(hw, hh)
 				ext.z_index  = (x + y) * 3 + 1
 				add_child(ext)
