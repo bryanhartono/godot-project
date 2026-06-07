@@ -26,12 +26,15 @@ const COLOR_LIGHT   := Color(0.38, 0.47, 0.25)
 const COLOR_DARK    := Color(0.26, 0.33, 0.17)
 const PANEL_BG      := Color(0.08, 0.04, 0.01, 0.92)
 const INIT_SLOTS    := 7
+const UNIT_Z_BASE   := 10
+const ELEV_LIFT     := TILE_H      # screen pixels raised per height level (32px)
 
 ## Public — states read these directly.
 var match_state: MatchState
 var config:      MatchConfig
 
 ## Private rendering.
+var _map_data:   MapData    = null
 var _tiles:      Dictionary = {}   # Vector2i -> Polygon2D
 var _hover_poly: Polygon2D  = null # mouse-hover tile indicator
 var _sprites:    Dictionary = {}   # BattleUnit -> AnimatedSprite2D
@@ -44,19 +47,21 @@ var _current_state: BaseBattleState = null
 ## UI nodes.
 var _turn_label:          Label
 var _info_label:          Label
-var _move_btn:            Button
+var _attack_btn:          Button
+var _cancel_btn:          Button
 var _wait_btn:            Button
 var _auto_btn:            Button
-var _path_overlays:       Array[Polygon2D]    = []
-var _ghost_spr:           AnimatedSprite2D    = null
-var _initiative_slots:    Array[Panel]        = []
-var _initiative_styles:   Array[StyleBoxFlat]  = []
-var _initiative_labels:   Array[Label]         = []
+var _path_overlays:       Array[Polygon2D]      = []
+var _ghost_spr:           AnimatedSprite2D      = null
+var _active_highlight:    Polygon2D             = null
+var _initiative_slots:    Array[Panel]          = []
+var _initiative_styles:   Array[StyleBoxFlat]   = []
+var _initiative_textures: Array[TextureRect]    = []
 var _stat_popup_layer:    CanvasLayer = null
 var _unit_card_layer:     CanvasLayer = null
 var _card_map:            Dictionary  = {}   # MonsterData -> Control
 var _dragging_data:       MonsterData = null
-var _drag_ghost:          Control     = null
+var _drag_ghost                       = null  # AnimatedSprite2D during deploy drag
 var _overlay:             Node = null
 var _loot_overlay:        Node = null
 var _again_btn:           Button = null
@@ -85,7 +90,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and _hover_poly != null and match_state != null:
 		var g := screen_to_grid(get_local_mouse_position())
 		if match_state.board.is_in_bounds(g):
-			_hover_poly.position = grid_to_screen(g)
+			_hover_poly.position = grid_to_screen(g, match_state.board.elevation_at(g))
 			_hover_poly.visible  = true
 		else:
 			_hover_poly.visible = false
@@ -103,7 +108,7 @@ func _input(event: InputEvent) -> void:
 
 	if _dragging_data != null:
 		if event is InputEventMouseMotion and _drag_ghost != null:
-			_drag_ghost.set_position(get_viewport().get_mouse_position() - Vector2(32, 42))
+			_drag_ghost.position = get_viewport().get_mouse_position() - Vector2(0, 52)
 		elif event is InputEventMouseButton and not event.pressed:
 			_finish_card_drag()
 			get_viewport().set_input_as_handled()
@@ -143,8 +148,8 @@ func spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	var spr := AnimatedSprite2D.new()
 	spr.sprite_frames = load("res://resources/units/%s.tres" % data.sprite_stem())
 	spr.scale    = Vector2(UNIT_SCALE, UNIT_SCALE)
-	spr.position = grid_to_screen(pos) - Vector2(0, SPRITE_LIFT)
-	spr.z_index  = pos.x + pos.y
+	spr.position = grid_to_screen(pos, match_state.board.elevation_at(pos)) - Vector2(0, SPRITE_LIFT)
+	spr.z_index  = pos.x + pos.y + UNIT_Z_BASE
 	var idle: StringName = "idle_back" if team == 0 else "idle_front"
 	_idle_anims[unit] = idle
 	spr.play(idle)
@@ -168,14 +173,14 @@ func sync_sprites() -> void:
 				_hp_bars[u]["fill"].queue_free()
 				_hp_bars.erase(u)
 		else:
-			var screen_pos := grid_to_screen(u.grid_pos)
+			var screen_pos := grid_to_screen(u.grid_pos, match_state.board.elevation_at(u.grid_pos))
 			spr.position = screen_pos - Vector2(0, SPRITE_LIFT)
-			spr.z_index  = u.grid_pos.x + u.grid_pos.y
+			spr.z_index  = u.grid_pos.x + u.grid_pos.y + UNIT_Z_BASE
 			if not spr.is_playing():
 				spr.play(_idle_anims.get(u, &"idle_front"))
 			if _hp_bars.has(u):
 				var bar_pos := screen_pos - Vector2(0, BAR_LIFT)
-				var z: int = u.grid_pos.x + u.grid_pos.y + 1
+				var z: int = u.grid_pos.x + u.grid_pos.y + UNIT_Z_BASE + 1
 				_hp_bars[u]["bg"].position   = bar_pos
 				_hp_bars[u]["fill"].position = bar_pos
 				_hp_bars[u]["bg"].z_index    = z
@@ -212,14 +217,23 @@ func _play_hit_shake(unit: BattleUnit) -> void:
 	t.tween_property(spr, "position", origin + Vector2(d*0.5,0), 0.03)
 	t.tween_property(spr, "position", origin,                    0.03)
 
-func show_move_btn(show: bool) -> void:
-	if _move_btn != null:
-		_move_btn.visible = show
+func show_attack_btn(show: bool) -> void:
+	if _attack_btn != null:
+		_attack_btn.visible = show
+
+func show_cancel_btn(show: bool) -> void:
+	if _cancel_btn != null:
+		_cancel_btn.visible = show
+
+func show_wait_btn(show: bool) -> void:
+	if _wait_btn != null:
+		_wait_btn.visible = show
 
 func set_deploy_mode(on: bool) -> void:
-	if _auto_btn != null: _auto_btn.visible = on
-	if _wait_btn != null: _wait_btn.visible  = not on
-	if _move_btn != null: _move_btn.visible  = false
+	if _auto_btn    != null: _auto_btn.visible    = on
+	if _wait_btn    != null: _wait_btn.visible     = not on
+	if _attack_btn  != null: _attack_btn.visible   = false
+	if _cancel_btn  != null: _cancel_btn.visible   = false
 
 func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array[Vector2i] = []) -> void:
 	clear_move_preview()
@@ -234,8 +248,8 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 	for g in atk_tiles:
 		var poly := Polygon2D.new()
 		poly.polygon  = diamond
-		poly.position = grid_to_screen(g)
-		poly.color    = _base_color(g).lerp(Color(0.90, 0.20, 0.20), 0.50)
+		poly.position = grid_to_screen(g, match_state.board.elevation_at(g))
+		poly.color    = Color(0.90, 0.20, 0.20, 0.50)
 		poly.z_index  = 3
 		add_child(poly)
 		_path_overlays.append(poly)
@@ -243,7 +257,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 	for i in range(1, path.size() - 1):
 		var poly := Polygon2D.new()
 		poly.polygon  = diamond
-		poly.position = grid_to_screen(path[i])
+		poly.position = grid_to_screen(path[i], match_state.board.elevation_at(path[i]))
 		poly.color    = Color(0.20, 0.80, 0.90, 0.55)
 		poly.z_index  = 4
 		add_child(poly)
@@ -251,7 +265,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 	# Destination tile — brighter
 	var dest_poly := Polygon2D.new()
 	dest_poly.polygon  = diamond
-	dest_poly.position = grid_to_screen(path[-1])
+	dest_poly.position = grid_to_screen(path[-1], match_state.board.elevation_at(path[-1]))
 	dest_poly.color    = Color(0.20, 0.85, 0.95, 0.75)
 	dest_poly.z_index  = 4
 	add_child(dest_poly)
@@ -264,17 +278,17 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 		_ghost_spr.scale         = src_spr.scale
 		_ghost_spr.flip_h        = src_spr.flip_h
 		_ghost_spr.modulate      = Color(1.0, 1.0, 1.0, 0.40)
-		_ghost_spr.position      = grid_to_screen(path[-1]) - Vector2(0, SPRITE_LIFT)
-		_ghost_spr.z_index       = path[-1].x + path[-1].y
+		_ghost_spr.position      = grid_to_screen(path[-1], match_state.board.elevation_at(path[-1])) - Vector2(0, SPRITE_LIFT)
+		_ghost_spr.z_index       = path[-1].x + path[-1].y + UNIT_Z_BASE - 1
 		_ghost_spr.play(_idle_anims.get(unit, &"idle_front"))
 		add_child(_ghost_spr)
 
-func clear_move_preview() -> void:
+func clear_move_preview(keep_ghost: bool = false) -> void:
 	for poly in _path_overlays:
 		if is_instance_valid(poly):
 			poly.queue_free()
 	_path_overlays.clear()
-	if _ghost_spr != null and is_instance_valid(_ghost_spr):
+	if not keep_ghost and _ghost_spr != null and is_instance_valid(_ghost_spr):
 		_ghost_spr.queue_free()
 		_ghost_spr = null
 
@@ -286,7 +300,7 @@ func walk_unit_to(unit: BattleUnit, path: Array[Vector2i], on_done: Callable) ->
 	var t := create_tween()
 	for i in range(1, path.size()):
 		t.tween_property(spr, "position",
-			grid_to_screen(path[i]) - Vector2(0, SPRITE_LIFT), 0.12)
+			grid_to_screen(path[i], match_state.board.elevation_at(path[i])) - Vector2(0, SPRITE_LIFT), 0.12)
 	t.tween_callback(on_done)
 
 func show_unit_popup(unit: BattleUnit) -> void:
@@ -307,7 +321,7 @@ func show_unit_popup(unit: BattleUnit) -> void:
 	layer.add_child(catcher)
 
 	# Convert world position to screen position accounting for camera
-	var world_pos: Vector2 = grid_to_screen(unit.grid_pos) - Vector2(0, SPRITE_LIFT + 48)
+	var world_pos: Vector2 = grid_to_screen(unit.grid_pos, match_state.board.elevation_at(unit.grid_pos)) - Vector2(0, SPRITE_LIFT + 48)
 	var screen_pos: Vector2 = get_global_transform_with_canvas() * world_pos
 
 	var popup := PanelContainer.new()
@@ -365,8 +379,8 @@ func hide_unit_popup() -> void:
 		_stat_popup_layer = null
 
 func _create_hp_bar(unit: BattleUnit, pos: Vector2i) -> void:
-	var bar_pos := grid_to_screen(pos) - Vector2(0, BAR_LIFT)
-	var z       := pos.x + pos.y + 1
+	var bar_pos := grid_to_screen(pos, match_state.board.elevation_at(pos)) - Vector2(0, BAR_LIFT)
+	var z       := pos.x + pos.y + UNIT_Z_BASE + 1
 	var hw      := BAR_W * 0.5
 	var hh      := BAR_H * 0.5
 	var bg_rect := PackedVector2Array([
@@ -406,20 +420,30 @@ func highlight_tiles(move_targets: Array[Vector2i],
 					 atk_targets:  Array[BattleUnit],
 					 ability_targets: Array[Vector2i]) -> void:
 	for g in _tiles:
-		_tiles[g].color = _base_color(g)
+		_tiles[g].color = Color(0, 0, 0, 0)
 	for g in move_targets:
 		if _tiles.has(g):
-			_tiles[g].color = _base_color(g).lerp(Color(0.30, 0.55, 0.95), 0.45)
+			_tiles[g].color = Color(0.30, 0.55, 0.95, 0.45)
 	for u in atk_targets:
 		if _tiles.has(u.grid_pos):
-			_tiles[u.grid_pos].color = _base_color(u.grid_pos).lerp(Color(0.90, 0.20, 0.20), 0.55)
+			_tiles[u.grid_pos].color = Color(0.90, 0.20, 0.20, 0.55)
 	for g in ability_targets:
 		if _tiles.has(g):
-			_tiles[g].color = _base_color(g).lerp(Color(0.95, 0.85, 0.20), 0.55)
+			_tiles[g].color = Color(0.95, 0.85, 0.20, 0.55)
 
 func clear_highlights() -> void:
 	for g in _tiles:
-		_tiles[g].color = _base_color(g)
+		_tiles[g].color = Color(0, 0, 0, 0)
+
+func highlight_active_unit(unit: BattleUnit) -> void:
+	if _active_highlight == null or unit == null:
+		return
+	_active_highlight.position = grid_to_screen(unit.grid_pos, match_state.board.elevation_at(unit.grid_pos))
+	_active_highlight.visible  = true
+
+func clear_active_highlight() -> void:
+	if _active_highlight != null:
+		_active_highlight.visible = false
 
 func set_labels(turn: String, _result: String, info: String) -> void:
 	_turn_label.text = turn
@@ -460,7 +484,7 @@ func show_unit_cards(queue: Array[MonsterData]) -> void:
 
 func _build_unit_card(data: MonsterData) -> Control:
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(68, 88)
+	card.custom_minimum_size = Vector2(68, 100)
 	card.mouse_filter        = Control.MOUSE_FILTER_IGNORE
 
 	var margin := MarginContainer.new()
@@ -471,12 +495,24 @@ func _build_unit_card(data: MonsterData) -> Control:
 	card.add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 3)
+	vbox.add_theme_constant_override("separation", 2)
 	margin.add_child(vbox)
+
+	# Sprite thumbnail
+	var frames: SpriteFrames = load("res://resources/units/%s.tres" % data.sprite_stem())
+	var anim: StringName = &"idle_front" if frames.has_animation(&"idle_front") else frames.get_animation_names()[0]
+	var icon := TextureRect.new()
+	icon.texture               = frames.get_frame_texture(anim, 0)
+	icon.texture_filter        = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.stretch_mode          = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.expand_mode           = TextureRect.EXPAND_IGNORE_SIZE
+	icon.custom_minimum_size   = Vector2(0, 44)
+	icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_child(icon)
 
 	var name_lbl := Label.new()
 	name_lbl.text = data.display_name
-	name_lbl.add_theme_font_size_override("font_size", 11)
+	name_lbl.add_theme_font_size_override("font_size", 10)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.autowrap_mode        = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(name_lbl)
@@ -484,7 +520,7 @@ func _build_unit_card(data: MonsterData) -> Control:
 	var sep := HSeparator.new()
 	vbox.add_child(sep)
 
-	for line: String in ["HP  %d" % data.max_hp, "ATK %d" % data.atk, "SPD %d" % data.speed]:
+	for line: String in ["ATK %d" % data.atk, "SPD %d" % data.speed]:
 		var lbl := Label.new()
 		lbl.text = line
 		lbl.add_theme_font_size_override("font_size", 10)
@@ -509,21 +545,14 @@ func _start_card_drag(data: MonsterData, card: Control) -> void:
 	_dragging_data = data
 	card.modulate  = Color(1.0, 1.0, 1.0, 0.30)
 
-	var ghost := PanelContainer.new()
-	ghost.custom_minimum_size = Vector2(68, 88)
-	ghost.mouse_filter        = Control.MOUSE_FILTER_IGNORE
-	ghost.theme               = AppTheme.game_theme
-	ghost.z_index             = 10
-
-	var lbl := Label.new()
-	lbl.text                   = data.display_name
-	lbl.add_theme_font_size_override("font_size", 11)
-	lbl.horizontal_alignment   = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment     = VERTICAL_ALIGNMENT_CENTER
-	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	ghost.add_child(lbl)
-
-	ghost.position = get_viewport().get_mouse_position() - Vector2(34, 44)
+	var ghost := AnimatedSprite2D.new()
+	ghost.sprite_frames  = load("res://resources/units/%s.tres" % data.sprite_stem())
+	ghost.scale          = Vector2(UNIT_SCALE + 1.0, UNIT_SCALE + 1.0)
+	ghost.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	ghost.modulate       = Color(1.0, 1.0, 1.0, 0.90)
+	ghost.z_index        = 100
+	ghost.play("idle_front")
+	ghost.position = get_viewport().get_mouse_position() - Vector2(0, 52)
 	_unit_card_layer.add_child(ghost)
 	_drag_ghost = ghost
 
@@ -657,10 +686,15 @@ func _on_wait() -> void:
 	if _current_state is PlayerTurnState:
 		(_current_state as PlayerTurnState).on_wait(self)
 
-func _on_move_confirm() -> void:
+func _on_attack() -> void:
 	AudioManager.play_sfx(&"ui_click")
 	if _current_state is PlayerTurnState:
-		(_current_state as PlayerTurnState).on_move_confirm(self)
+		(_current_state as PlayerTurnState).on_attack(self)
+
+func _on_cancel() -> void:
+	AudioManager.play_sfx(&"ui_click")
+	if _current_state is PlayerTurnState:
+		(_current_state as PlayerTurnState).on_cancel(self)
 
 func _on_auto_place() -> void:
 	AudioManager.play_sfx(&"ui_click")
@@ -682,8 +716,11 @@ func _on_go_to_menu() -> void:
 
 # ── Coordinate helpers ────────────────────────────────────────────────────────
 
-func grid_to_screen(g: Vector2i) -> Vector2:
-	return Vector2((g.x - g.y) * TILE_W * 0.5, (g.x + g.y) * TILE_H * 0.5)
+func grid_to_screen(g: Vector2i, h: int = 0) -> Vector2:
+	return Vector2(
+		(g.x - g.y) * TILE_W * 0.5,
+		(g.x + g.y) * TILE_H * 0.5 - h * ELEV_LIFT
+	)
 
 func screen_to_grid(s: Vector2) -> Vector2i:
 	var hw := TILE_W * 0.5
@@ -703,31 +740,115 @@ func _build_background() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(bg)
 
-func _build_board() -> void:
-	var hw      := TILE_W * 0.5
-	var hh      := TILE_H * 0.5
+func _build_board(map: MapData = null) -> void:
+	var hw := TILE_W * 0.5
+	var hh := TILE_H * 0.5
 	var diamond := PackedVector2Array([
 		Vector2(0, -hh), Vector2(hw, 0), Vector2(0, hh), Vector2(-hw, 0)
 	])
-	for y in BOARD_H:
-		for x in BOARD_W:
+
+	if map == null:
+		# Fallback: draw flat colored polygons (old behavior, used until Task 7 wires up map data)
+		for y in BOARD_H:
+			for x in BOARD_W:
+				var g    := Vector2i(x, y)
+				var poly := Polygon2D.new()
+				poly.polygon  = diamond
+				poly.position = grid_to_screen(g)
+				poly.color    = Color(0.30, 0.40, 0.20) if (x+y)%2==0 else Color(0.20, 0.28, 0.13)
+				add_child(poly)
+				_tiles[g] = poly
+		_active_highlight          = Polygon2D.new()
+		_active_highlight.polygon  = diamond
+		_active_highlight.color    = Color(1.0, 0.90, 0.20, 0.60)
+		_active_highlight.z_index  = 2
+		_active_highlight.visible  = false
+		add_child(_active_highlight)
+		_hover_poly         = Polygon2D.new()
+		_hover_poly.polygon = diamond
+		_hover_poly.color   = Color(1.0, 1.0, 1.0, 0.22)
+		_hover_poly.visible = false
+		_hover_poly.z_index = 999
+		add_child(_hover_poly)
+		return
+
+	var tile_tex: Texture2D = load(TileRegistry.TEXTURE_PATH)
+	var scale_flat := Vector2(float(TILE_W) / 16.0, float(TILE_H) / 16.0)
+
+	for y in map.map_rows:
+		for x in map.map_width:
 			var g    := Vector2i(x, y)
+			var tile := map.get_tile(g)
+			var h    := tile.height
+			var z_base: int = (x + y) * 3 + h
+
+			# Ground sprite
+			var spr := Sprite2D.new()
+			spr.texture        = tile_tex
+			spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			spr.centered       = false
+			spr.region_enabled = true
+			if h == 0 or tile.terrain in [&"water", &"lava"]:
+				spr.region_rect = TileRegistry.flat_region(tile.terrain)
+				spr.scale       = scale_flat
+			else:
+				spr.region_rect = TileRegistry.cube_region(map.biome)
+				spr.scale       = scale_flat
+			spr.position = grid_to_screen(g, h) - Vector2(hw, hh)
+			spr.z_index  = z_base
+			add_child(spr)
+
+			# Wall extender for height 2
+			if h == 2:
+				var ext := Sprite2D.new()
+				ext.texture        = tile_tex
+				ext.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+				ext.centered       = false
+				ext.region_enabled = true
+				ext.region_rect    = TileRegistry.WALL_EXTENDER
+				ext.scale          = scale_flat
+				ext.position = grid_to_screen(g, 1) - Vector2(hw, hh)
+				ext.z_index  = (x + y) * 3 + 1
+				add_child(ext)
+
+			# Highlight overlay (transparent Polygon2D — tinted by highlight_tiles)
 			var poly := Polygon2D.new()
 			poly.polygon  = diamond
-			poly.position = grid_to_screen(g)
-			poly.color    = _base_color(g)
+			poly.color    = Color(0, 0, 0, 0)
+			poly.position = grid_to_screen(g, h)
+			poly.z_index  = z_base + 1
 			add_child(poly)
 			_tiles[g] = poly
-	# Hover overlay — a bright white tint drawn above all tiles
-	_hover_poly          = Polygon2D.new()
-	_hover_poly.polygon  = diamond
-	_hover_poly.color    = Color(1.0, 1.0, 1.0, 0.22)
-	_hover_poly.visible  = false
-	_hover_poly.z_index  = 5
-	add_child(_hover_poly)
 
-func _base_color(g: Vector2i) -> Color:
-	return COLOR_LIGHT if (g.x + g.y) % 2 == 0 else COLOR_DARK
+			# Decoration sprite
+			if tile.decoration != &"none":
+				var dec := Sprite2D.new()
+				dec.texture        = tile_tex
+				dec.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+				dec.centered       = false
+				dec.region_enabled = true
+				dec.region_rect    = TileRegistry.decoration_region(tile.decoration)
+				dec.scale          = scale_flat
+				var dec_lift := hh + TILE_H * 0.5 if tile.decoration != &"flower" else hh + TILE_H * 0.25
+				dec.position = grid_to_screen(g, h) - Vector2(hw, dec_lift)
+				dec.z_index  = z_base + 2
+				add_child(dec)
+
+	# Active unit highlight
+	_active_highlight          = Polygon2D.new()
+	_active_highlight.polygon  = diamond
+	_active_highlight.color    = Color(1.0, 0.90, 0.20, 0.60)
+	_active_highlight.z_index  = 2
+	_active_highlight.visible  = false
+	add_child(_active_highlight)
+
+	# Hover overlay
+	_hover_poly         = Polygon2D.new()
+	_hover_poly.polygon = diamond
+	_hover_poly.color   = Color(1.0, 1.0, 1.0, 0.22)
+	_hover_poly.visible = false
+	_hover_poly.z_index = 999
+	add_child(_hover_poly)
 
 # ── UI construction ───────────────────────────────────────────────────────────
 
@@ -783,13 +904,14 @@ func _build_ui() -> void:
 		_initiative_slots.append(slot)
 		_initiative_styles.append(style)
 
-		var lbl := Label.new()
-		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-		lbl.add_theme_font_size_override("font_size", 11)
-		slot.add_child(lbl)
-		_initiative_labels.append(lbl)
+		var tex_rect := TextureRect.new()
+		tex_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		tex_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tex_rect.stretch_mode   = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_rect.expand_mode    = TextureRect.EXPAND_IGNORE_SIZE
+		tex_rect.mouse_filter   = Control.MOUSE_FILTER_IGNORE
+		slot.add_child(tex_rect)
+		_initiative_textures.append(tex_rect)
 
 	# ── Bottom panel (anchored to bottom of screen) ──────────────────
 	var bot_ctrl := Control.new()
@@ -823,20 +945,27 @@ func _build_ui() -> void:
 	_info_label.add_theme_font_size_override("font_size", 16)
 	bot_row.add_child(_info_label)
 
-	# Action buttons — Move + Wait side by side; Move hidden until destination chosen
-	# Auto-place replaces both during deploy phase
+	# Action buttons — Attack / Cancel / Wait + Auto-place (deploy only)
 	var btn_row_inner := HBoxContainer.new()
 	btn_row_inner.add_theme_constant_override("separation", 6)
 	btn_row_inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	bot_row.add_child(btn_row_inner)
 
-	_move_btn = Button.new()
-	_move_btn.text                = "Move"
-	_move_btn.visible             = false
-	_move_btn.custom_minimum_size = Vector2(90, 0)
-	_move_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_move_btn.pressed.connect(_on_move_confirm)
-	btn_row_inner.add_child(_move_btn)
+	_attack_btn = Button.new()
+	_attack_btn.text                = "Attack"
+	_attack_btn.visible             = false
+	_attack_btn.custom_minimum_size = Vector2(90, 0)
+	_attack_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_attack_btn.pressed.connect(_on_attack)
+	btn_row_inner.add_child(_attack_btn)
+
+	_cancel_btn = Button.new()
+	_cancel_btn.text                = "Cancel"
+	_cancel_btn.visible             = false
+	_cancel_btn.custom_minimum_size = Vector2(90, 0)
+	_cancel_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_cancel_btn.pressed.connect(_on_cancel)
+	btn_row_inner.add_child(_cancel_btn)
 
 	_wait_btn = Button.new()
 	_wait_btn.text                = "Wait"
@@ -863,14 +992,14 @@ func _update_initiative_strip() -> void:
 		if i < queue.size():
 			var u: BattleUnit = queue[i]
 			_initiative_slots[i].visible = true
-			var base_a: float = 0.85 if i == 0 else 0.5
+			var base_a: float = 0.90 if i == 0 else 0.50
 			if u.team == 0:
 				_initiative_styles[i].bg_color = Color(0.22, 0.42, 0.88, base_a)
 			else:
 				_initiative_styles[i].bg_color = Color(0.80, 0.25, 0.25, base_a)
-			# Show first 6 chars of name; add "★" for the active unit.
-			var n: String = u.data.display_name
-			_initiative_labels[i].text = ("★\n" if i == 0 else "") + n.substr(0, 6)
+			var frames: SpriteFrames = load("res://resources/units/%s.tres" % u.data.sprite_stem())
+			var anim: StringName = &"idle_front" if frames.has_animation(&"idle_front") else frames.get_animation_names()[0]
+			_initiative_textures[i].texture = frames.get_frame_texture(anim, 0)
 		else:
 			_initiative_slots[i].visible = false
 
