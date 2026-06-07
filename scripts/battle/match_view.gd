@@ -791,12 +791,15 @@ func _build_board(map: MapData = null) -> void:
 			spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			spr.centered       = false
 			spr.region_enabled = true
-			if h == 0 or tile.terrain in [&"water", &"lava"]:
+			if tile.terrain in [&"water", &"lava"]:
+				# Water/lava are always flat (no side walls)
 				spr.region_rect = TileRegistry.flat_region(tile.terrain)
 				spr.scale       = scale_flat
 			else:
+				# All terrain (including h=0) uses the cube sprite so side walls show
+				# at map edges and terrain borders — this is the FFT aesthetic
 				spr.region_rect = TileRegistry.cube_region(map.biome)
-				spr.scale       = scale_cube  # uniform 4×4 preserves 3D cube look
+				spr.scale       = scale_cube
 			spr.position = grid_to_screen(g, h) - Vector2(hw, hh)
 			spr.z_index  = z_base
 			add_child(spr)
