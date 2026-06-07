@@ -289,6 +289,9 @@ func use_ability(unit: BattleUnit, target_pos: Vector2i) -> bool:
 ## Returns a deep copy for AI simulation. Mutating the copy never affects self.
 func duplicate() -> MatchState:
 	var copy := MatchState.new(Board.new(board.width, board.height))
+	copy.board._terrain    = board._terrain.duplicate()
+	copy.board._elevation  = board._elevation.duplicate()
+	copy.board._decoration = board._decoration.duplicate()
 	copy.current_team = current_team
 	var active_idx: int = units.find(active_unit)
 	for i in range(units.size()):
