@@ -128,27 +128,49 @@ func peek_initiative(n: int) -> Array[BattleUnit]:
 
 # ── Movement & combat ─────────────────────────────────────────────────────────
 
-## All empty, in-bounds tiles reachable within move_range via 4-directional steps.
+## All empty, in-bounds tiles reachable within move_range via Dijkstra cost-BFS.
+## Uphill 1 level costs 2; uphill 2+ levels is blocked for ground/water units.
+## Flying units ignore elevation costs. Terrain passability is always enforced.
 func legal_moves(unit: BattleUnit) -> Array[Vector2i]:
+	if unit.has_moved:
+		return []
+	var mtype:  StringName      = unit.data.movement_type
+	var budget: int             = unit.data.move_range
+	var start:  Vector2i        = unit.grid_pos
+	var cost_map: Dictionary    = { start: 0 }
+	var queue: Array[Vector2i]  = [start]
 	var result: Array[Vector2i] = []
-	var visited := {unit.grid_pos: 0}
-	var frontier: Array[Vector2i] = [unit.grid_pos]
-	while not frontier.is_empty():
-		var cur: Vector2i = frontier.pop_front()
-		var dist: int = visited[cur]
-		if dist >= unit.data.move_range:
-			continue
-		for d in DIRS:
-			var nxt: Vector2i = cur + d
-			if visited.has(nxt):
+
+	while queue.size() > 0:
+		queue.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+			return cost_map[a] < cost_map[b]
+		)
+		var cur: Vector2i = queue.pop_front()
+		for d: Vector2i in DIRS:
+			var nb: Vector2i = cur + d
+			if not board.is_in_bounds(nb):
 				continue
-			if not board.is_in_bounds(nxt):
+			if not board.is_passable(nb, mtype):
 				continue
-			if board.is_occupied(nxt):
+			if board.get_unit_at(nb) != null:
 				continue
-			visited[nxt] = dist + 1
-			result.append(nxt)
-			frontier.append(nxt)
+			var dh: int = board.elevation_at(nb) - board.elevation_at(cur)
+			var step_cost: int = 1
+			if mtype != &"flying":
+				if dh >= 2:
+					continue
+				if dh == 1:
+					step_cost = 2
+			var new_cost: int = cost_map[cur] + step_cost
+			if new_cost > budget:
+				continue
+			if cost_map.has(nb) and cost_map[nb] <= new_cost:
+				continue
+			cost_map[nb] = new_cost
+			queue.append(nb)
+			if nb not in result:
+				result.append(nb)
+
 	return result
 
 func move_unit(unit: BattleUnit, pos: Vector2i) -> bool:
