@@ -14,8 +14,6 @@ const SquadPicker     = preload("res://scripts/battle/squad_picker.gd")
 
 const TILE_W      := 64
 const TILE_H      := 32
-const BOARD_W     := 7
-const BOARD_H     := 7
 const UNIT_SCALE  := 3.0
 const SPRITE_LIFT := 8.0
 const BAR_W       := 18.0
@@ -26,7 +24,7 @@ const COLOR_LIGHT   := Color(0.38, 0.47, 0.25)
 const COLOR_DARK    := Color(0.26, 0.33, 0.17)
 const PANEL_BG      := Color(0.08, 0.04, 0.01, 0.92)
 const INIT_SLOTS    := 7
-const UNIT_Z_BASE   := 10
+const UNIT_Z_BASE   := 200
 const ELEV_LIFT     := TILE_H      # screen pixels raised per height level (32px)
 
 ## Public — states read these directly.
@@ -79,9 +77,13 @@ func _ready() -> void:
 		config.enemy_squad  = SquadPicker.random_squad(10)
 		config.difficulty   = 2
 
-	match_state = MatchState.new(Board.new(BOARD_W, BOARD_H))
+	_map_data  = MapGenerator.generate()
+	var board  := Board.new()
+	board.load_map(_map_data)
+	match_state = MatchState.new(board)
+
 	_build_background()
-	_build_board()
+	_build_board(_map_data)
 	_build_ui()
 	_setup_camera()
 	change_state(DeployState.new())
@@ -149,7 +151,7 @@ func spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	spr.sprite_frames = load("res://resources/units/%s.tres" % data.sprite_stem())
 	spr.scale    = Vector2(UNIT_SCALE, UNIT_SCALE)
 	spr.position = grid_to_screen(pos, match_state.board.elevation_at(pos)) - Vector2(0, SPRITE_LIFT)
-	spr.z_index  = pos.x + pos.y + UNIT_Z_BASE
+	spr.z_index  = (pos.x + pos.y) * 3 + match_state.board.elevation_at(pos) + UNIT_Z_BASE
 	var idle: StringName = "idle_back" if team == 0 else "idle_front"
 	_idle_anims[unit] = idle
 	spr.play(idle)
@@ -175,12 +177,12 @@ func sync_sprites() -> void:
 		else:
 			var screen_pos := grid_to_screen(u.grid_pos, match_state.board.elevation_at(u.grid_pos))
 			spr.position = screen_pos - Vector2(0, SPRITE_LIFT)
-			spr.z_index  = u.grid_pos.x + u.grid_pos.y + UNIT_Z_BASE
+			spr.z_index  = (u.grid_pos.x + u.grid_pos.y) * 3 + match_state.board.elevation_at(u.grid_pos) + UNIT_Z_BASE
 			if not spr.is_playing():
 				spr.play(_idle_anims.get(u, &"idle_front"))
 			if _hp_bars.has(u):
 				var bar_pos := screen_pos - Vector2(0, BAR_LIFT)
-				var z: int = u.grid_pos.x + u.grid_pos.y + UNIT_Z_BASE + 1
+				var z: int = (u.grid_pos.x + u.grid_pos.y) * 3 + match_state.board.elevation_at(u.grid_pos) + UNIT_Z_BASE + 1
 				_hp_bars[u]["bg"].position   = bar_pos
 				_hp_bars[u]["fill"].position = bar_pos
 				_hp_bars[u]["bg"].z_index    = z
@@ -250,7 +252,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 		poly.polygon  = diamond
 		poly.position = grid_to_screen(g, match_state.board.elevation_at(g))
 		poly.color    = Color(0.90, 0.20, 0.20, 0.50)
-		poly.z_index  = 3
+		poly.z_index  = 100
 		add_child(poly)
 		_path_overlays.append(poly)
 	# Path trail — intermediate tiles
@@ -259,7 +261,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 		poly.polygon  = diamond
 		poly.position = grid_to_screen(path[i], match_state.board.elevation_at(path[i]))
 		poly.color    = Color(0.20, 0.80, 0.90, 0.55)
-		poly.z_index  = 4
+		poly.z_index  = 100
 		add_child(poly)
 		_path_overlays.append(poly)
 	# Destination tile — brighter
@@ -267,7 +269,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 	dest_poly.polygon  = diamond
 	dest_poly.position = grid_to_screen(path[-1], match_state.board.elevation_at(path[-1]))
 	dest_poly.color    = Color(0.20, 0.85, 0.95, 0.75)
-	dest_poly.z_index  = 4
+	dest_poly.z_index  = 100
 	add_child(dest_poly)
 	_path_overlays.append(dest_poly)
 	# Ghost sprite at destination
@@ -279,7 +281,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 		_ghost_spr.flip_h        = src_spr.flip_h
 		_ghost_spr.modulate      = Color(1.0, 1.0, 1.0, 0.40)
 		_ghost_spr.position      = grid_to_screen(path[-1], match_state.board.elevation_at(path[-1])) - Vector2(0, SPRITE_LIFT)
-		_ghost_spr.z_index       = path[-1].x + path[-1].y + UNIT_Z_BASE - 1
+		_ghost_spr.z_index       = (path[-1].x + path[-1].y) * 3 + match_state.board.elevation_at(path[-1]) + UNIT_Z_BASE - 1
 		_ghost_spr.play(_idle_anims.get(unit, &"idle_front"))
 		add_child(_ghost_spr)
 
@@ -380,7 +382,7 @@ func hide_unit_popup() -> void:
 
 func _create_hp_bar(unit: BattleUnit, pos: Vector2i) -> void:
 	var bar_pos := grid_to_screen(pos, match_state.board.elevation_at(pos)) - Vector2(0, BAR_LIFT)
-	var z       := pos.x + pos.y + UNIT_Z_BASE + 1
+	var z       := (pos.x + pos.y) * 3 + match_state.board.elevation_at(pos) + UNIT_Z_BASE + 1
 	var hw      := BAR_W * 0.5
 	var hh      := BAR_H * 0.5
 	var bg_rect := PackedVector2Array([
@@ -748,9 +750,9 @@ func _build_board(map: MapData = null) -> void:
 	])
 
 	if map == null:
-		# Fallback: draw flat colored polygons (old behavior, used until Task 7 wires up map data)
-		for y in BOARD_H:
-			for x in BOARD_W:
+		# Fallback: draw flat colored polygons
+		for y in match_state.board.height:
+			for x in match_state.board.width:
 				var g    := Vector2i(x, y)
 				var poly := Polygon2D.new()
 				poly.polygon  = diamond
@@ -761,7 +763,7 @@ func _build_board(map: MapData = null) -> void:
 		_active_highlight          = Polygon2D.new()
 		_active_highlight.polygon  = diamond
 		_active_highlight.color    = Color(1.0, 0.90, 0.20, 0.60)
-		_active_highlight.z_index  = 2
+		_active_highlight.z_index  = 100
 		_active_highlight.visible  = false
 		add_child(_active_highlight)
 		_hover_poly         = Polygon2D.new()
@@ -838,7 +840,7 @@ func _build_board(map: MapData = null) -> void:
 	_active_highlight          = Polygon2D.new()
 	_active_highlight.polygon  = diamond
 	_active_highlight.color    = Color(1.0, 0.90, 0.20, 0.60)
-	_active_highlight.z_index  = 2
+	_active_highlight.z_index  = 100
 	_active_highlight.visible  = false
 	add_child(_active_highlight)
 
@@ -1005,7 +1007,7 @@ func _update_initiative_strip() -> void:
 
 func _setup_camera() -> void:
 	var cam := Camera2D.new()
-	cam.position = grid_to_screen(Vector2i(BOARD_W >> 1, BOARD_H >> 1))
+	cam.position = grid_to_screen(Vector2i(match_state.board.width >> 1, match_state.board.height >> 1))
 	cam.zoom     = Vector2(1.0, 1.0)
 	add_child(cam)
 	cam.make_current()

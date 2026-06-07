@@ -1,8 +1,5 @@
-# scripts/battle/states/deploy_state.gd
 class_name DeployState
 extends BaseBattleState
-
-const PLAYER_ROWS: Array[int] = [5, 6]
 
 var _unplaced: Array[MonsterData] = []
 
@@ -20,9 +17,8 @@ func exit(ctx: Node) -> void:
 	ctx.clear_highlights()
 
 func handle_input(_ctx: Node, _event: InputEvent) -> void:
-	pass  # Placement handled via card drag in match_view
+	pass
 
-## Called by match_view when the player drops a card over the board.
 func on_card_dropped(ctx: Node, data: MonsterData, tile: Vector2i) -> void:
 	if not (data in _unplaced):
 		return
@@ -38,13 +34,13 @@ func on_card_dropped(ctx: Node, data: MonsterData, tile: Vector2i) -> void:
 		ctx.match_state.initialize_initiative()
 		ctx.advance_turn()
 
-## Auto-place all remaining units on random valid tiles.
 func auto_place(ctx: Node) -> void:
+	var rows := _player_rows(ctx)
 	var valid: Array[Vector2i] = []
-	for y in PLAYER_ROWS:
+	for y in rows:
 		for x in range(ctx.match_state.board.width):
 			var g := Vector2i(x, y)
-			if not ctx.match_state.board.is_occupied(g):
+			if not ctx.match_state.board.is_occupied(g) and ctx.match_state.board.is_passable(g, &"ground"):
 				valid.append(g)
 	valid.shuffle()
 	var placed := 0
@@ -57,12 +53,21 @@ func auto_place(ctx: Node) -> void:
 	ctx.match_state.initialize_initiative()
 	ctx.advance_turn()
 
-# ── Internal ──────────────────────────────────────────────────────────────────
+func _player_rows(ctx: Node) -> Array[int]:
+	var h: int = ctx.match_state.board.height
+	return [h - 2, h - 1]
+
+func _ai_positions(ctx: Node) -> Array[Vector2i]:
+	var w: int = ctx.match_state.board.width
+	var mid: int = w / 2
+	return [
+		Vector2i(mid - 1, 0), Vector2i(mid, 0), Vector2i(mid + 1, 0),
+		Vector2i(mid - 1, 1), Vector2i(mid, 1), Vector2i(mid + 1, 1),
+	]
 
 func _place_ai_squad(ctx: Node) -> void:
 	var ai_squad: Array[MonsterData] = ctx.config.enemy_squad
-	var positions := [Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0),
-	                  Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1)]
+	var positions := _ai_positions(ctx)
 	for i in range(mini(ai_squad.size(), positions.size())):
 		ctx.spawn_unit(ai_squad[i], 1, positions[i])
 
@@ -71,15 +76,17 @@ func _is_valid_tile(ctx: Node, g: Vector2i) -> bool:
 		return false
 	if ctx.match_state.board.is_occupied(g):
 		return false
-	if g.y not in PLAYER_ROWS:
+	if not ctx.match_state.board.is_passable(g, &"ground"):
+		return false
+	if g.y not in _player_rows(ctx):
 		return false
 	return true
 
 func _highlight_valid_tiles(ctx: Node) -> void:
 	var valid: Array[Vector2i] = []
-	for y in PLAYER_ROWS:
+	for y in _player_rows(ctx):
 		for x in range(ctx.match_state.board.width):
 			var g := Vector2i(x, y)
-			if not ctx.match_state.board.is_occupied(g):
+			if not ctx.match_state.board.is_occupied(g) and ctx.match_state.board.is_passable(g, &"ground"):
 				valid.append(g)
 	ctx.highlight_tiles(valid, ([] as Array[BattleUnit]), ([] as Array[Vector2i]))
