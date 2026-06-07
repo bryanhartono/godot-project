@@ -151,7 +151,7 @@ func spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	spr.sprite_frames = load("res://resources/units/%s.tres" % data.sprite_stem())
 	spr.scale    = Vector2(UNIT_SCALE, UNIT_SCALE)
 	spr.position = grid_to_screen(pos, match_state.board.elevation_at(pos)) - Vector2(0, SPRITE_LIFT)
-	spr.z_index  = (pos.x + pos.y) * 3 + match_state.board.elevation_at(pos) + UNIT_Z_BASE
+	spr.z_index  = (pos.x + pos.y) * 5 + match_state.board.elevation_at(pos) + UNIT_Z_BASE
 	var idle: StringName = "idle_back" if team == 0 else "idle_front"
 	_idle_anims[unit] = idle
 	spr.play(idle)
@@ -177,12 +177,12 @@ func sync_sprites() -> void:
 		else:
 			var screen_pos := grid_to_screen(u.grid_pos, match_state.board.elevation_at(u.grid_pos))
 			spr.position = screen_pos - Vector2(0, SPRITE_LIFT)
-			spr.z_index  = (u.grid_pos.x + u.grid_pos.y) * 3 + match_state.board.elevation_at(u.grid_pos) + UNIT_Z_BASE
+			spr.z_index  = (u.grid_pos.x + u.grid_pos.y) * 5 + match_state.board.elevation_at(u.grid_pos) + UNIT_Z_BASE
 			if not spr.is_playing():
 				spr.play(_idle_anims.get(u, &"idle_front"))
 			if _hp_bars.has(u):
 				var bar_pos := screen_pos - Vector2(0, BAR_LIFT)
-				var z: int = (u.grid_pos.x + u.grid_pos.y) * 3 + match_state.board.elevation_at(u.grid_pos) + UNIT_Z_BASE + 1
+				var z: int = (u.grid_pos.x + u.grid_pos.y) * 5 + match_state.board.elevation_at(u.grid_pos) + UNIT_Z_BASE + 1
 				_hp_bars[u]["bg"].position   = bar_pos
 				_hp_bars[u]["fill"].position = bar_pos
 				_hp_bars[u]["bg"].z_index    = z
@@ -281,7 +281,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 		_ghost_spr.flip_h        = src_spr.flip_h
 		_ghost_spr.modulate      = Color(1.0, 1.0, 1.0, 0.40)
 		_ghost_spr.position      = grid_to_screen(path[-1], match_state.board.elevation_at(path[-1])) - Vector2(0, SPRITE_LIFT)
-		_ghost_spr.z_index       = (path[-1].x + path[-1].y) * 3 + match_state.board.elevation_at(path[-1]) + UNIT_Z_BASE - 1
+		_ghost_spr.z_index       = (path[-1].x + path[-1].y) * 5 + match_state.board.elevation_at(path[-1]) + UNIT_Z_BASE - 1
 		_ghost_spr.play(_idle_anims.get(unit, &"idle_front"))
 		add_child(_ghost_spr)
 
@@ -382,7 +382,7 @@ func hide_unit_popup() -> void:
 
 func _create_hp_bar(unit: BattleUnit, pos: Vector2i) -> void:
 	var bar_pos := grid_to_screen(pos, match_state.board.elevation_at(pos)) - Vector2(0, BAR_LIFT)
-	var z       := (pos.x + pos.y) * 3 + match_state.board.elevation_at(pos) + UNIT_Z_BASE + 1
+	var z       := (pos.x + pos.y) * 5 + match_state.board.elevation_at(pos) + UNIT_Z_BASE + 1
 	var hw      := BAR_W * 0.5
 	var hh      := BAR_H * 0.5
 	var bg_rect := PackedVector2Array([
@@ -783,7 +783,7 @@ func _build_board(map: MapData = null) -> void:
 			var g    := Vector2i(x, y)
 			var tile := map.get_tile(g)
 			var h    := tile.height
-			var z_base: int = (x + y) * 3 + h
+			var z_base: int = (x + y) * 5 + h
 
 			# Ground sprite
 			var spr := Sprite2D.new()
@@ -825,7 +825,7 @@ func _build_board(map: MapData = null) -> void:
 				ext.region_rect    = TileRegistry.cube_region(map.biome)
 				ext.scale          = scale_cube
 				ext.position = grid_to_screen(g, 1) - Vector2(hw, hh)
-				ext.z_index  = (x + y) * 3 + 1
+				ext.z_index  = (x + y) * 5 + 1
 				add_child(ext)
 
 			# Highlight overlay (transparent Polygon2D — tinted by highlight_tiles)
@@ -847,8 +847,8 @@ func _build_board(map: MapData = null) -> void:
 				dec.region_rect    = TileRegistry.decoration_region(tile.decoration)
 				var is_flat_dec := tile.decoration == &"flower"
 				dec.scale = scale_flat if is_flat_dec else scale_cube
-				# Bottom of sprite aligned to tile center: dec_lift = sprite screen height
-				var dec_lift := float(TILE_H) if is_flat_dec else float(TILE_W)
+				# For cube-scale decs: bottom of visual content touches diamond top vertex (y - hh)
+				var dec_lift := (hh + TILE_H * 0.5) if is_flat_dec else (hh + TILE_W * 0.5)
 				dec.position = grid_to_screen(g, h) - Vector2(hw, dec_lift)
 				dec.z_index  = z_base + 2
 				add_child(dec)
