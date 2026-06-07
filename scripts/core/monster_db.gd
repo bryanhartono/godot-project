@@ -30,7 +30,7 @@ func _register_all() -> void:
 	_register(MonsterData.create(&"archer",  "Archer",  2,  4, 2, 1, 3, null,                               4, &"human_archer",    2))
 	# ── Assassins ─────────────────────────────────────────────────────
 	_register(MonsterData.create(&"spider",  "Spider",  2,  5, 2, 4, 1, AbilityData.passive_poison(1),     17, &"",               4))
-	_register(MonsterData.create(&"bat",     "Bat",     2,  4, 3, 4, 1, null,                              28, &"",               5))
+	_register(MonsterData.create(&"bat",     "Bat",     2,  4, 3, 4, 1, null,                              28, &"",               5, &"flying"))
 	# ── Casters ───────────────────────────────────────────────────────
 	_register(MonsterData.create(&"wraith",  "Wraith",  3,  5, 3, 2, 2, AbilityData.active_blink(4),       19, &"",               3))
 	_register(MonsterData.create(&"imp",     "Imp",     3,  5, 3, 2, 1, AbilityData.active_aoe_strike(1),  21, &"",               4))

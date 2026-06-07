@@ -15,12 +15,14 @@ extends Resource
 @export var sprite_row: int = 0
 ## Filename stem under res://resources/units/. Defaults to id if empty.
 @export var sprite_file: StringName = &""
+@export var movement_type: StringName = &"ground"
+# &"ground" | &"flying" | &"water" | &"lava"
 
 ## Returns the stem used to load res://resources/units/<stem>.tres
 func sprite_stem() -> StringName:
 	return sprite_file if sprite_file != &"" else id
 
-static func create(p_id: StringName, p_name: String, p_cost: int, p_hp: int, p_atk: int, p_move: int, p_range: int, p_ability: AbilityData = null, p_row: int = 0, p_sprite_file: StringName = &"", p_speed: int = 3) -> MonsterData:
+static func create(p_id: StringName, p_name: String, p_cost: int, p_hp: int, p_atk: int, p_move: int, p_range: int, p_ability: AbilityData = null, p_row: int = 0, p_sprite_file: StringName = &"", p_speed: int = 3, p_movement_type: StringName = &"ground") -> MonsterData:
 	var d := MonsterData.new()
 	d.id = p_id
 	d.display_name = p_name
@@ -33,4 +35,5 @@ static func create(p_id: StringName, p_name: String, p_cost: int, p_hp: int, p_a
 	d.sprite_row = p_row
 	d.sprite_file = p_sprite_file
 	d.speed = p_speed
+	d.movement_type = p_movement_type
 	return d
