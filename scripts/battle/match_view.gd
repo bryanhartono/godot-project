@@ -24,7 +24,7 @@ const COLOR_LIGHT   := Color(0.38, 0.47, 0.25)
 const COLOR_DARK    := Color(0.26, 0.33, 0.17)
 const PANEL_BG      := Color(0.08, 0.04, 0.01, 0.92)
 const INIT_SLOTS    := 7
-const UNIT_Z_BASE   := 200
+const UNIT_Z_BASE   := 3   # type-layer offset: tile=0,highlight=1,dec=2,unit=3,bar=4
 const ELEV_LIFT     := TILE_H      # screen pixels raised per height level (32px)
 
 ## Public — states read these directly.
@@ -151,7 +151,7 @@ func spawn_unit(data: MonsterData, team: int, pos: Vector2i) -> void:
 	spr.sprite_frames = load("res://resources/units/%s.tres" % data.sprite_stem())
 	spr.scale    = Vector2(UNIT_SCALE, UNIT_SCALE)
 	spr.position = grid_to_screen(pos, match_state.board.elevation_at(pos)) - Vector2(0, SPRITE_LIFT)
-	spr.z_index  = (pos.x + pos.y) * 5 + match_state.board.elevation_at(pos) + UNIT_Z_BASE
+	spr.z_index  = (pos.x + pos.y) * 7 +match_state.board.elevation_at(pos) + UNIT_Z_BASE
 	var idle: StringName = "idle_back" if team == 0 else "idle_front"
 	_idle_anims[unit] = idle
 	spr.play(idle)
@@ -177,12 +177,12 @@ func sync_sprites() -> void:
 		else:
 			var screen_pos := grid_to_screen(u.grid_pos, match_state.board.elevation_at(u.grid_pos))
 			spr.position = screen_pos - Vector2(0, SPRITE_LIFT)
-			spr.z_index  = (u.grid_pos.x + u.grid_pos.y) * 5 + match_state.board.elevation_at(u.grid_pos) + UNIT_Z_BASE
+			spr.z_index  = (u.grid_pos.x + u.grid_pos.y) * 7 +match_state.board.elevation_at(u.grid_pos) + UNIT_Z_BASE
 			if not spr.is_playing():
 				spr.play(_idle_anims.get(u, &"idle_front"))
 			if _hp_bars.has(u):
 				var bar_pos := screen_pos - Vector2(0, BAR_LIFT)
-				var z: int = (u.grid_pos.x + u.grid_pos.y) * 5 + match_state.board.elevation_at(u.grid_pos) + UNIT_Z_BASE + 1
+				var z: int = (u.grid_pos.x + u.grid_pos.y) * 7 +match_state.board.elevation_at(u.grid_pos) + UNIT_Z_BASE + 1
 				_hp_bars[u]["bg"].position   = bar_pos
 				_hp_bars[u]["fill"].position = bar_pos
 				_hp_bars[u]["bg"].z_index    = z
@@ -252,7 +252,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 		poly.polygon  = diamond
 		poly.position = grid_to_screen(g, match_state.board.elevation_at(g))
 		poly.color    = Color(0.90, 0.20, 0.20, 0.50)
-		poly.z_index  = 100
+		poly.z_index  = (g.x + g.y) * 7 + match_state.board.elevation_at(g) + 2
 		add_child(poly)
 		_path_overlays.append(poly)
 	# Path trail — intermediate tiles
@@ -261,7 +261,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 		poly.polygon  = diamond
 		poly.position = grid_to_screen(path[i], match_state.board.elevation_at(path[i]))
 		poly.color    = Color(0.20, 0.80, 0.90, 0.55)
-		poly.z_index  = 100
+		poly.z_index  = (path[i].x + path[i].y) * 7 + match_state.board.elevation_at(path[i]) + 2
 		add_child(poly)
 		_path_overlays.append(poly)
 	# Destination tile — brighter
@@ -269,7 +269,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 	dest_poly.polygon  = diamond
 	dest_poly.position = grid_to_screen(path[-1], match_state.board.elevation_at(path[-1]))
 	dest_poly.color    = Color(0.20, 0.85, 0.95, 0.75)
-	dest_poly.z_index  = 100
+	dest_poly.z_index  = (path[-1].x + path[-1].y) * 7 + match_state.board.elevation_at(path[-1]) + 2
 	add_child(dest_poly)
 	_path_overlays.append(dest_poly)
 	# Ghost sprite at destination
@@ -281,7 +281,7 @@ func show_move_preview(unit: BattleUnit, path: Array[Vector2i], atk_tiles: Array
 		_ghost_spr.flip_h        = src_spr.flip_h
 		_ghost_spr.modulate      = Color(1.0, 1.0, 1.0, 0.40)
 		_ghost_spr.position      = grid_to_screen(path[-1], match_state.board.elevation_at(path[-1])) - Vector2(0, SPRITE_LIFT)
-		_ghost_spr.z_index       = (path[-1].x + path[-1].y) * 5 + match_state.board.elevation_at(path[-1]) + UNIT_Z_BASE - 1
+		_ghost_spr.z_index       = (path[-1].x + path[-1].y) * 7 +match_state.board.elevation_at(path[-1]) + UNIT_Z_BASE - 1
 		_ghost_spr.play(_idle_anims.get(unit, &"idle_front"))
 		add_child(_ghost_spr)
 
@@ -382,7 +382,7 @@ func hide_unit_popup() -> void:
 
 func _create_hp_bar(unit: BattleUnit, pos: Vector2i) -> void:
 	var bar_pos := grid_to_screen(pos, match_state.board.elevation_at(pos)) - Vector2(0, BAR_LIFT)
-	var z       := (pos.x + pos.y) * 5 + match_state.board.elevation_at(pos) + UNIT_Z_BASE + 1
+	var z       := (pos.x + pos.y) * 7 +match_state.board.elevation_at(pos) + UNIT_Z_BASE + 1
 	var hw      := BAR_W * 0.5
 	var hh      := BAR_H * 0.5
 	var bg_rect := PackedVector2Array([
@@ -440,7 +440,9 @@ func clear_highlights() -> void:
 func highlight_active_unit(unit: BattleUnit) -> void:
 	if _active_highlight == null or unit == null:
 		return
-	_active_highlight.position = grid_to_screen(unit.grid_pos, match_state.board.elevation_at(unit.grid_pos))
+	var h := match_state.board.elevation_at(unit.grid_pos)
+	_active_highlight.position = grid_to_screen(unit.grid_pos, h)
+	_active_highlight.z_index  = (unit.grid_pos.x + unit.grid_pos.y) * 7 + h + 1
 	_active_highlight.visible  = true
 
 func clear_active_highlight() -> void:
@@ -552,7 +554,7 @@ func _start_card_drag(data: MonsterData, card: Control) -> void:
 	ghost.scale          = Vector2(UNIT_SCALE + 1.0, UNIT_SCALE + 1.0)
 	ghost.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	ghost.modulate       = Color(1.0, 1.0, 1.0, 0.90)
-	ghost.z_index        = 100
+	ghost.z_index        = 9999
 	ghost.play("idle_front")
 	ghost.position = get_viewport().get_mouse_position() - Vector2(0, 52)
 	_unit_card_layer.add_child(ghost)
@@ -783,7 +785,7 @@ func _build_board(map: MapData = null) -> void:
 			var g    := Vector2i(x, y)
 			var tile := map.get_tile(g)
 			var h    := tile.height
-			var z_base: int = (x + y) * 5 + h
+			var z_base: int = (x + y) * 7 +h
 
 			# Ground sprite
 			var spr := Sprite2D.new()
@@ -825,7 +827,7 @@ func _build_board(map: MapData = null) -> void:
 				ext.region_rect    = TileRegistry.cube_region(map.biome)
 				ext.scale          = scale_cube
 				ext.position = grid_to_screen(g, 1) - Vector2(hw, hh)
-				ext.z_index  = (x + y) * 5 + 1
+				ext.z_index  = (x + y) * 7 +1
 				add_child(ext)
 
 			# Highlight overlay (transparent Polygon2D — tinted by highlight_tiles)
