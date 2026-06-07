@@ -11,12 +11,12 @@ const TEXTURE_PATH := "res://assets/Sprites/Tiles.png"
 #   C4 (131,187, 43) bright G → grass
 #   C10(130,170,205) blue-gry → water
 static var FLAT: Dictionary = {
-	&"grass":  Rect2i( 64, 32, 16, 16),  # R2 C4 — bright green (131,187,43)
-	&"stone":  Rect2i(  0, 32, 16, 16),  # R2 C0 — gray (145,134,141)
-	&"snow":   Rect2i( 16, 32, 16, 16),  # R2 C1 — light blue-white (184,205,225)
-	&"desert": Rect2i( 48, 32, 16, 16),  # R2 C3 — sandy brown (118,99,60)
-	&"water":  Rect2i(160, 32, 16, 16),  # R2 C10 — blue-gray (130,170,205)
-	&"lava":   Rect2i( 32, 32, 16, 16),  # R2 C2 — orange-red (202,100,45)
+	&"grass":  Rect2i( 64, 32, 16, 16),  # R2 C4 — bright green
+	&"stone":  Rect2i(  0, 32, 16, 16),  # R2 C0 — gray
+	&"snow":   Rect2i( 16, 48, 16, 16),  # R3 C1 — light blue-gray (ice look)
+	&"desert": Rect2i( 48, 32, 16, 16),  # R2 C3 — sandy brown
+	&"water":  Rect2i( 16, 32, 16, 16),  # R2 C1 — full-size blue-gray diamond
+	&"lava":   Rect2i( 32, 32, 16, 16),  # R2 C2 — orange-red
 }
 
 # Elevated cube tile (height 1) — 16x32 region spanning rows 0-1.

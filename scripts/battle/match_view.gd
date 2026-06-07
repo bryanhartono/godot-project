@@ -792,7 +792,18 @@ func _build_board(map: MapData = null) -> void:
 			spr.centered       = false
 			spr.region_enabled = true
 			if tile.terrain in [&"water", &"lava"]:
-				# Water/lava are always flat (no side walls)
+				# Draw biome cube walls below the water/lava surface — "pit" effect
+				var pit := Sprite2D.new()
+				pit.texture        = tile_tex
+				pit.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+				pit.centered       = false
+				pit.region_enabled = true
+				pit.region_rect    = TileRegistry.cube_region(map.biome)
+				pit.scale          = scale_cube
+				pit.position       = grid_to_screen(g, h) - Vector2(hw, hh)
+				pit.z_index        = z_base - 1
+				add_child(pit)
+				# Flat water/lava surface sits on top of the pit walls
 				spr.region_rect = TileRegistry.flat_region(tile.terrain)
 				spr.scale       = scale_flat
 			else:
@@ -826,7 +837,7 @@ func _build_board(map: MapData = null) -> void:
 			add_child(poly)
 			_tiles[g] = poly
 
-			# Decoration sprite
+			# Decoration sprite — flowers are flat, solid decs (rock/tree/fence) use cube scale
 			if tile.decoration != &"none":
 				var dec := Sprite2D.new()
 				dec.texture        = tile_tex
@@ -834,8 +845,10 @@ func _build_board(map: MapData = null) -> void:
 				dec.centered       = false
 				dec.region_enabled = true
 				dec.region_rect    = TileRegistry.decoration_region(tile.decoration)
-				dec.scale          = scale_flat
-				var dec_lift := hh + TILE_H * 0.5 if tile.decoration != &"flower" else hh + TILE_H * 0.25
+				var is_flat_dec := tile.decoration == &"flower"
+				dec.scale = scale_flat if is_flat_dec else scale_cube
+				# Bottom of sprite aligned to tile center: dec_lift = sprite screen height
+				var dec_lift := float(TILE_H) if is_flat_dec else float(TILE_W)
 				dec.position = grid_to_screen(g, h) - Vector2(hw, dec_lift)
 				dec.z_index  = z_base + 2
 				add_child(dec)
